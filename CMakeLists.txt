@@ -142,6 +142,7 @@ set(FALLOUT_ENGINE_SOURCES
     "src/heap.cc"
     "src/heap.h"
     "src/input.cc"
+    "src/game_clock.cc"
     "src/input.h"
     "src/interface.cc"
     "src/interface.h"

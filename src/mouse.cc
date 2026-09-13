@@ -651,9 +651,9 @@ void _mouse_simulate_input(int delta_x, int delta_y, int buttons)
         if ((buttons & 0x01) != 0) {
             gMouseEvent |= MOUSE_EVENT_LEFT_BUTTON_REPEAT;
 
-            if (getTicksSince(previousLeftButtonTimestamp) > BUTTON_REPEAT_TIME) {
+            if ((SDL_GetTicks() - previousLeftButtonTimestamp) > BUTTON_REPEAT_TIME) {
                 gMouseEvent |= MOUSE_EVENT_LEFT_BUTTON_DOWN;
-                previousLeftButtonTimestamp = getTicks();
+                previousLeftButtonTimestamp = SDL_GetTicks();
             }
         } else {
             gMouseEvent |= MOUSE_EVENT_LEFT_BUTTON_UP;
@@ -661,16 +661,16 @@ void _mouse_simulate_input(int delta_x, int delta_y, int buttons)
     } else {
         if ((buttons & 0x01) != 0) {
             gMouseEvent |= MOUSE_EVENT_LEFT_BUTTON_DOWN;
-            previousLeftButtonTimestamp = getTicks();
+            previousLeftButtonTimestamp = SDL_GetTicks();
         }
     }
 
     if ((previousEvent & MOUSE_EVENT_RIGHT_BUTTON_DOWN_REPEAT) != 0) {
         if ((buttons & 0x02) != 0) {
             gMouseEvent |= MOUSE_EVENT_RIGHT_BUTTON_REPEAT;
-            if (getTicksSince(previousRightButtonTimestamp) > BUTTON_REPEAT_TIME) {
+            if ((SDL_GetTicks() - previousRightButtonTimestamp) > BUTTON_REPEAT_TIME) {
                 gMouseEvent |= MOUSE_EVENT_RIGHT_BUTTON_DOWN;
-                previousRightButtonTimestamp = getTicks();
+                previousRightButtonTimestamp = SDL_GetTicks();
             }
         } else {
             gMouseEvent |= MOUSE_EVENT_RIGHT_BUTTON_UP;
@@ -678,7 +678,7 @@ void _mouse_simulate_input(int delta_x, int delta_y, int buttons)
     } else {
         if (buttons & 0x02) {
             gMouseEvent |= MOUSE_EVENT_RIGHT_BUTTON_DOWN;
-            previousRightButtonTimestamp = getTicks();
+            previousRightButtonTimestamp = SDL_GetTicks();
         }
     }
 

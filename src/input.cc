@@ -10,6 +10,7 @@
 #include "dinput.h"
 #include "draw.h"
 #include "game.h"
+#include "game_clock.h"
 #include "kb.h"
 #include "memory.h"
 #include "mouse.h"
@@ -316,7 +317,7 @@ void tickersExecute()
         return;
     }
 
-    gTickerLastTimestamp = SDL_GetTicks();
+    gTickerLastTimestamp = gameClockGetTicks();
 
     TickerListNode* curr = gTickerListHead;
     TickerListNode** currPtr = &(gTickerListHead);
@@ -598,7 +599,7 @@ void screenshotHandlerConfigure(int keyCode, ScreenshotHandler* handler)
 // 0x4C9370
 unsigned int getTicks()
 {
-    return SDL_GetTicks();
+    return gameClockGetTicks();
 }
 
 // 0x4C937C
@@ -629,7 +630,7 @@ void inputBlockForTocks(unsigned int ms)
 // 0x4C93E0
 unsigned int getTicksSince(unsigned int start)
 {
-    unsigned int end = SDL_GetTicks();
+    unsigned int end = gameClockGetTicks();
 
     // NOTE: Uninline.
     return getTicksBetween(end, start);
@@ -1069,7 +1070,7 @@ void _GNW95_process_message()
 
     if (gProgramIsActive && !keyboardIsDisabled()) {
         // NOTE: Uninline
-        int tick = getTicks();
+        int tick = SDL_GetTicks();
 
         for (int key = 0; key < SDL_NUM_SCANCODES; key++) {
             RepeatInfo* ptr = &(_GNW95_key_time_stamps[key]);
@@ -1109,7 +1110,7 @@ static void _GNW95_process_key(KeyboardData* data)
 
     RepeatInfo* ptr = &(_GNW95_key_time_stamps[scanCode]);
     if (data->down == 1) {
-        ptr->tick = getTicks();
+        ptr->tick = SDL_GetTicks();
         ptr->repeatCount = 0;
     } else {
         ptr->tick = -1;

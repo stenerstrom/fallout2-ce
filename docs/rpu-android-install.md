@@ -86,3 +86,17 @@ cd os/android
 The reused native libraries must match the intended engine revision; rebuild them when changing native code. Configure and retain a local signing key through the ignored `os/android/debug-keystore.properties` file. The standard GitHub Actions build includes only the engine and checks that bundled game assets are absent. Keep the complete APK and original game data local.
 
 The prepared RPU 2.4.34 installation contains approximately 1.45 GB of game files. The complete APK and its unpacked game data together need roughly 3 GB on the device.
+
+
+## In-game command HUD
+
+Version 1.3.0-rpu.4 adds a small **≡** button over the game surface. Tap it for commands or drag it to a different position. The panel closes before a command is sent, and its taps are consumed by Android rather than passed through to the map.
+
+- **Speed:** 0.5×, 1×, 1.5×, 2×, 3× and 4×. The native game clock changes continuously, without resetting existing timer deadlines. Rendering, touch timing, keyboard repeat and mouse-button repeat use real time. Speed starts at 1× with each new game process. Actual acceleration is still limited by the device's frame rate.
+- **Party Orders:** loot, heal, regroup, scatter, holster, player pickup/loot, switch pickup mode, ammo type and burst control. Bindings are read from `mods/party_orders.ini` when opening the panel, including modifier combinations and disabled keys. These buttons invoke the mod's keyboard commands; the action still depends on the current game context and companion abilities.
+- **Common actions:** inventory, character, Pip-Boy, map, save/load dialogs, hand/weapon mode, end turn and Escape.
+- **Skills:** sneak, lockpick, steal, traps, first aid, doctor, science and repair.
+
+Commands use SDL's Android key-down/key-up path so that RPU's `HOOK_KEYPRESS` and `key_pressed` handling see them. Modifiers are pressed before the primary key and released afterward. Pending commands are cancelled and held keys released when the activity pauses or is destroyed.
+
+Validation includes native clock tests for speed ratios, continuity, fractional time and 64-bit uptime, 28 keyboard-binding assertions, comparison of all 256 DIK mappings with the fetched SDL source, Java compilation and native builds. The complete APK's game assets are verified against their embedded SHA-256 manifest. Physical play-testing of the new HUD and companion actions remains to be done by the user.

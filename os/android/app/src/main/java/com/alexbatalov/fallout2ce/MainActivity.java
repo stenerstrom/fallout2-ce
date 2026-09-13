@@ -7,6 +7,7 @@ import java.io.IOException;
 
 public class MainActivity extends SDLActivity {
     private GameSession gameSession;
+    private GameCommandHud commandHud;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         String error = null;
@@ -25,9 +26,21 @@ public class MainActivity extends SDLActivity {
             return;
         }
         super.onCreate(savedInstanceState);
+        if (mLayout != null && mSurface != null) commandHud = new GameCommandHud(this, mLayout, mSurface);
+    }
+
+    @Override protected void onPause() {
+        if (commandHud != null) commandHud.pause();
+        super.onPause();
+    }
+
+    @Override public void onBackPressed() {
+        if (commandHud != null && commandHud.closeMenu()) return;
+        super.onBackPressed();
     }
 
     @Override protected void onDestroy() {
+        if (commandHud != null) { commandHud.dispose(); commandHud = null; }
         // SDL joins the native thread, including its final config write, first.
         super.onDestroy();
         if (gameSession != null) {
