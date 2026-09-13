@@ -97,7 +97,7 @@ int dictionaryFree(Dictionary* dictionary)
         internal_free(dictionary->entries);
     }
 
-    memset(dictionary, 0, sizeof(*dictionary));
+    *dictionary = Dictionary {};
 
     return 0;
 }
