@@ -7,10 +7,10 @@
 
     <style name="LauncherTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#E6BE5B</item>
-        <item name="android:windowBackground">#171B18</item>
-        <item name="android:statusBarColor">#171B18</item>
-        <item name="android:navigationBarColor">#171B18</item>
+        <item name="android:colorAccent">#D4BC83</item>
+        <item name="android:windowBackground">#0C1210</item>
+        <item name="android:statusBarColor">#0C1210</item>
+        <item name="android:navigationBarColor">#0C1210</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>

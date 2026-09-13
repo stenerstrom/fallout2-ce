@@ -47,9 +47,15 @@ public class ImportActivity extends Activity {
 
         new Thread(() -> {
             ContentResolver contentResolver = getContentResolver();
-            File externalFilesDir = getExternalFilesDir(null);
-            boolean copied = externalFilesDir != null
-                    && FileUtils.copyRecursively(contentResolver, treeDocument, externalFilesDir);
+            boolean success=false;
+            try (GameSession lock=GameSession.tryAcquire(getFilesDir())) {
+                if(lock!=null) {
+                    File directory=new SettingsRepository(this).gameDirectory();
+                    if(directory.isDirectory()||directory.mkdirs())
+                        success=FileUtils.copyRecursively(contentResolver,treeDocument,directory);
+                }
+            } catch(java.io.IOException ignored) {}
+            final boolean copied=success;
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 dialog.dismiss();
@@ -67,7 +73,7 @@ public class ImportActivity extends Activity {
     }
 
     private void startLauncherActivity() {
-        Intent intent = new Intent(this, LauncherActivity.class);
+        Intent intent = GameProfiles.intent(this, LauncherActivity.class);
         startActivity(intent);
     }
 

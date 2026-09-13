@@ -19,7 +19,7 @@ public class SettingsActivity extends Activity {
     }
 
     private void showSections() {
-        LinearLayout body = LauncherUi.page(this, "Settings");
+        LinearLayout body = LauncherUi.page(this, GameProfiles.current(this).title + " · Settings");
         LauncherUi.note(this, body, "Changes take effect the next time you start the game. Some gameplay and sound preferences may also be restored from a save.");
         try {
             JSONArray sections = SettingsSchema.load(this);
@@ -31,7 +31,7 @@ public class SettingsActivity extends Activity {
                         .setTag("section:" + key);
             }
             LauncherUi.button(this, body, "Mods and all configuration files", view -> showFiles());
-            LauncherUi.note(this, body, "Mod options may require features that FOR:CE does not yet support. Faster walking and the Goris animation option should stay disabled in the current RPU installation.");
+            if (GameProfiles.current(this) == GameProfile.RPU) LauncherUi.note(this, body, "Mod options may require features that FOR:CE does not yet support. Faster walking and the Goris animation option should stay disabled in the current RPU installation.");
             LauncherUi.button(this, body, "Back", view -> finish());
         } catch (Exception error) { LauncherUi.error(this, error.getMessage()); }
     }
@@ -62,7 +62,7 @@ public class SettingsActivity extends Activity {
     }
 
     private void openEditor(String file, String section, String title, boolean raw) {
-        startActivity(new Intent(this, SettingsEditorActivity.class)
+        startActivity(GameProfiles.intent(this, SettingsEditorActivity.class)
                 .putExtra("file", file).putExtra("section", section).putExtra("title", title).putExtra("raw", raw));
     }
 

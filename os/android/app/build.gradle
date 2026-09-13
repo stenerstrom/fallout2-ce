@@ -95,9 +95,9 @@ android {
         minSdk 24
         targetSdk 32
         manifestPlaceholders = [appLabel: project.hasProperty('PRIVATE_GAME_ASSETS')
-                ? 'Fallout 2 RPU CE – Complete' : '@string/app_name']
-        versionCode 8
-        versionName '1.3.0-rpu.5'
+                ? 'Wasteland Collection' : '@string/app_name']
+        versionCode 9
+        versionName '1.4.0-alpha.1'
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'

@@ -20,8 +20,8 @@ public class BundledInstallActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        LinearLayout body = LauncherUi.page(this, "Preparing Fallout 2");
-        LauncherUi.note(this, body, "The game files and RPU are included in the app. The first launch takes a little longer while the files are prepared.");
+        LinearLayout body = LauncherUi.page(this, "Preparing " + GameProfiles.current(this).title);
+        LauncherUi.note(this, body, "This adventure is included in the app. Its files are prepared once, with separate settings and saved games.");
         status = LauncherUi.text(this, body, "Starting…", 18, LauncherUi.GOLD);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(100);
@@ -40,9 +40,7 @@ public class BundledInstallActivity extends Activity {
             String failure = null;
             try (GameSession session = GameSession.tryAcquire(getFilesDir())) {
                 if (session == null) throw new IOException("The game is running. Exit the game and try again.");
-                SettingsRepository repository = new SettingsRepository(this);
-                BundledGameExtractor.extract(repository.gameDirectory(), BundledGame.entries(this),
-                        path -> getAssets().open("bundled-game/files/" + path), this::updateProgress);
+                BundledGame.install(this, this::updateProgress);
             } catch (Exception error) {
                 failure = error.getMessage();
             }
@@ -52,7 +50,7 @@ public class BundledInstallActivity extends Activity {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 if (isFinishing() || isDestroyed()) return;
                 if (message == null) {
-                    startActivity(new Intent(this, LauncherActivity.class));
+                    startActivity(GameProfiles.intent(this, LauncherActivity.class));
                     finish();
                 } else {
                     status.setText("Could not prepare the game: " + message);

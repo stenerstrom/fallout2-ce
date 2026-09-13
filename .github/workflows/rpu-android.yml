@@ -86,7 +86,7 @@ jobs:
           assert game.attrib[android + 'process'].endswith(':game')
           with zipfile.ZipFile('os/android/app/build/outputs/apk/debug/app-debug.apk') as apk:
               # Private game data is packaged only by local builds.
-              assert not any(name.startswith('assets/bundled-game/') for name in apk.namelist())
+              assert not any(name.startswith(('assets/bundled-game/', 'assets/bundled-games/', 'assets/bundled-pool/')) for name in apk.namelist())
               schema = json.loads(apk.read('assets/engine-settings.json'))
               assert sum(len(section['fields']) for section in schema) == 97
               for abi in ('arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'):

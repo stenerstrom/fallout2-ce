@@ -2,6 +2,8 @@
 
 Assessment date: 2026-09-13.
 
+Current completion roadmap: [Plan for full RPU support](rpu-completion-plan.md). This document records the initial assessment; Android builds, device smoke tests, the launcher and command HUD have since been completed.
+
 ## Objective and baseline
 
 Run the user's Restoration Project Updated fork with CE, then verify the same installation on Android. The candidate engine baseline is FOR:CE commit `15913457d1a3a931f5a3dac0649459cfd4620198`. The RPU source baseline is `stenerstrom/Fallout2_Restoration_Project` commit `c14d687e4c401f64f7ef4ee255de95f07a91a6e5`.
@@ -49,7 +51,7 @@ cmake --build out/build/rpu-macos --target fallout2-ce --parallel 6
 
 The `fallout2-ce` target completed with exit code 0 and produced a Mach-O arm64 executable and bundled `ce.dat`. The workspace README gives the exact commands using the local tool environment. Engine source and RPU scripts remain unchanged at this baseline.
 
-Game execution and Android builds have not been performed. The immediate missing input for game testing is the path to the user's original Fallout 2 game data.
+At the time of this initial assessment, game execution and Android builds had not yet been performed. They have since succeeded using the user's original game data. See the completion roadmap above and the workspace test record for current evidence.
 
 ## References
 
@@ -59,3 +61,6 @@ Game execution and Android builds have not been performed. The immediate missing
 - [RPU support tracker](https://github.com/fallout2-ce/fallout2-ce/issues/196)
 - [Installation/configuration discussion](https://github.com/fallout2-ce/fallout2-ce/issues/622)
 - [Build and scanner instructions](../CONTRIBUTING.md)
+
+
+Nästa testversion med spelväljare, Sonora och Nevada beskrivs i [Wasteland Collection](wasteland-collection.md).

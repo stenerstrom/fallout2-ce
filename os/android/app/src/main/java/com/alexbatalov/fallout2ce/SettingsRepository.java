@@ -12,10 +12,12 @@ import java.util.List;
 
 final class SettingsRepository {
     private final Context context;
-    SettingsRepository(Context context) { this.context = context; }
+    private final GameProfile profile;
+    SettingsRepository(Context context) { this(context, GameProfiles.current(context)); }
+    SettingsRepository(Context context, GameProfile profile) { this.context = context; this.profile = profile; }
 
     File gameDirectory() throws IOException {
-        File root = context.getExternalFilesDir(null);
+        File root = GameProfiles.directory(context, profile);
         if (root == null) throw new IOException("The game folder is not available.");
         return root;
     }
@@ -66,7 +68,7 @@ final class SettingsRepository {
         if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Could not create the configuration folder.");
         String original = read(relative);
         // Keep a user-recoverable previous version, in addition to AtomicFile's crash recovery.
-        atomicWrite(new File(context.getFilesDir(), "config-backup-" + relative.replace('/', '_')), original);
+        atomicWrite(new File(context.getFilesDir(), "config-backup-" + profile.id + "-" + relative.replace('/', '_')), original);
         atomicWrite(target, text);
     }
 

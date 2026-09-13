@@ -40,7 +40,7 @@ final class GameCommandHud {
 
     GameCommandHud(Activity activity, ViewGroup root, View gameView) {
         this.activity = activity; this.root = root; this.gameView = gameView;
-        preferences = activity.getSharedPreferences("command-hud", Context.MODE_PRIVATE);
+        preferences = activity.getSharedPreferences(GameProfiles.current(activity)==GameProfile.RPU?"command-hud":"command-hud-"+GameProfiles.current(activity).id, Context.MODE_PRIVATE);
         handle = new Button(activity);
         handle.setAllCaps(false);
         handle.setTextSize(18);
@@ -157,6 +157,7 @@ final class GameCommandHud {
             row.addView(choice, cell());
         }
 
+        if (GameProfiles.current(activity) == GameProfile.RPU) {
         heading(body, "Companions and RPU");
         LauncherUi.note(activity, body, "Orders are sent to the game. Companions must be able to carry out the selected order.");
         try {
@@ -183,6 +184,8 @@ final class GameCommandHud {
             LauncherUi.note(activity, body, "Could not read Party Orders: " + error.getMessage());
         }
 
+        }
+
         heading(body, "Common commands");
         String[][] common = {
             {"Inventory", "23"}, {"Character", "46"}, {"Pip-Boy", "25"}, {"Map", "15"},
@@ -200,7 +203,7 @@ final class GameCommandHud {
             if (i % 2 == 0) row = row(body);
             addCommand(row, skills[i], Integer.toString(i + 2));
         }
-        LauncherUi.note(activity, body, "Drag the ≡ button to move it. Key bindings follow mods/party_orders.ini. Speed resets to 1× when the game process restarts.");
+        LauncherUi.note(activity, body, "Drag the ≡ button to move it. RPU companion bindings follow mods/party_orders.ini. Speed resets to 1× when the game process restarts.");
 
         int width = Math.min(dp(380), root.getWidth() - dp(16));
         int height = Math.min(dp(680), root.getHeight() - dp(64));
