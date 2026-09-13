@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import time
 import sys
 import tarfile
 import tempfile
@@ -157,6 +158,15 @@ class CollectionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.lib.profile_dir("../outside")
 
+    def test_native_uppercase_save_directory(self):
+        path = self.lib.profile_dir("rpu") / "data/SAVEGAME/SLOT01/SAVE.DAT"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"native save")
+        archive = self.lib.export_saves("rpu")
+        import zipfile
+        with zipfile.ZipFile(archive) as saved:
+            self.assertEqual(saved.read("SAVEGAME/SLOT01/SAVE.DAT"), b"native save")
+
     def test_save_export_isolated(self):
         for profile in ("rpu","sonora"):
             path = self.lib.profile_dir(profile)/"data/savegame/slot01/save.dat"
@@ -167,8 +177,10 @@ class CollectionTests(unittest.TestCase):
         with zipfile.ZipFile(result) as archive:
             self.assertEqual(archive.read("SAVEGAME/slot01/save.dat"),b"rpu")
 
-def small_installer(path, data=b"engine", malicious=None):
+def small_installer(path, data=b"engine", malicious=None, launcher=None):
     raw_files = {"engine/fallout2-ce":data,"launcher.py":b"print('fixture')\n","icon.svg":b"<svg/>"}
+    if launcher is not None:
+        raw_files["launcher.py"] = launcher
     package = {"version":"test-1","architecture":"x86_64","files":{n:hashlib.sha256(v).hexdigest() for n,v in raw_files.items()}}
     raw_files["package.json"] = json.dumps(package).encode()
     if malicious:
@@ -181,6 +193,29 @@ def small_installer(path, data=b"engine", malicious=None):
                 tar.addfile(entry,io.BytesIO(data))
 
 class InstallerTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "linux", "Linux desktop integration")
+    def test_desktop_entry_handles_spaces_and_special_characters(self):
+        from gi.repository import Gio
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            dest = root / 'install space $percent% "quote"'
+            archive = root / "package.run"
+            launcher = b"from pathlib import Path\nimport sys\nPath(sys.argv[-1], 'menu-launch-ok').write_text('ok')\n"
+            small_installer(archive, launcher=launcher)
+            with patch.dict(os.environ, {"XDG_DATA_HOME": str(root / "xdg")}):
+                install(archive, dest, launch=False, dependencies=False)
+            entry = root / "xdg/applications/wasteland-collection.desktop"
+            import subprocess
+            subprocess.run(["desktop-file-validate", str(entry)], check=True)
+            app = Gio.DesktopAppInfo.new_from_filename(str(entry))
+            self.assertIsNotNone(app)
+            self.assertTrue(app.launch([], None))
+            for _ in range(50):
+                if (dest / "menu-launch-ok").exists():
+                    break
+                time.sleep(0.1)
+            self.assertTrue((dest / "menu-launch-ok").exists())
+
     def test_install_upgrade_keeps_profiles_and_validates_archive(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);archive=root/"package.run";dest=root/"data"

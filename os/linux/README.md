@@ -37,7 +37,7 @@ backend; no Omarchy/Hyprland configuration is modified.
 
 Game folder opens the selected profile. Back up saves creates a ZIP under
 backups/. This build does not offer an automatic ZIP restore; retain the archive
-and copy saves into the selected profile's data/savegame while the game is closed.
+and copy saves into the selected profile's data/SAVEGAME (capitalization may vary) while the game is closed.
 Normal keyboard commands and the engine's help remain available. The Android
 touch HUD is not part of this desktop launcher.
 

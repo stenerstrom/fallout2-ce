@@ -273,9 +273,24 @@ class Library:
             if result.returncode:
                 raise RuntimeError("The game exited with an error. See " + str(log_dir / (profile + ".log")))
 
+    def save_directory(self, profile):
+        root = self.profile_dir(profile)
+        patches = ini_get(self.settings(profile), "system", "master_patches", "data").replace("\\\\", "/")
+        relative = (patches.rstrip("/") + "/" if patches not in ("", ".") else "") + "SAVEGAME"
+        safe_path(root, relative)
+        current = root
+        for part in relative.split("/"):
+            matches = [p for p in current.iterdir() if p.name.lower() == part.lower()] if current.is_dir() else []
+            if len(matches) > 1:
+                raise ValueError("Ambiguous save directory capitalization")
+            current = matches[0] if matches else current / part
+            if current.is_symlink():
+                raise ValueError("A save path is a symbolic link")
+        return current
+
     def export_saves(self, profile):
         with self.session():
-            source = safe_path(self.profile_dir(profile), "data/savegame")
+            source = self.save_directory(profile)
             if not source.is_dir():
                 raise ValueError("This game has no saved games yet.")
             out = safe_path(self.home, "backups")
