@@ -17,14 +17,14 @@ public class LauncherActivity extends Activity {
         super.onCreate(state);
         repository = new SettingsRepository(this);
         LinearLayout body = LauncherUi.page(this, "Fallout 2 RPU CE");
-        LauncherUi.note(this, body, "Välj inställningar innan du startar spelet.");
+        LauncherUi.note(this, body, "Choose your settings before starting the game.");
         status = LauncherUi.text(this, body, "", 18, LauncherUi.GOLD);
-        play = LauncherUi.button(this, body, "Spela", view -> startGame());
+        play = LauncherUi.button(this, body, "Play", view -> startGame());
         play.setTag("play");
-        settings = LauncherUi.button(this, body, "Inställningar", view ->
+        settings = LauncherUi.button(this, body, "Settings", view ->
                 startActivity(new Intent(this, SettingsActivity.class)));
         settings.setTag("settings");
-        LauncherUi.note(this, body, "Efter att du har avslutat spelet kan du öppna appen igen för att ändra inställningar. Sparningarna finns kvar.");
+        LauncherUi.note(this, body, "After exiting the game, reopen the app to change settings. Your saves are kept.");
     }
 
     @Override protected void onResume() {
@@ -58,16 +58,16 @@ public class LauncherActivity extends Activity {
             boolean running = repository.gameRunning();
             boolean installed = repository.hasGameData();
             settings.setEnabled(installed && !running);
-            play.setText(running ? "Fortsätt spela" : installed ? "Spela" : "Välj spelfiler");
+            play.setText(running ? "Resume game" : installed ? "Play" : "Choose game files");
             if (running) {
-                status.setText("Spelet är öppet. Avsluta via spelets meny innan du ändrar inställningarna.");
+                status.setText("The game is running. Exit through the game menu before changing settings.");
             } else if (!installed) {
-                status.setText("Välj din Fallout 2-mapp med RPU för att komma igång.");
+                status.setText("Select your Fallout 2 folder with RPU to get started.");
             } else {
                 IniDocument config = new IniDocument(repository.read("fallout2.cfg"));
                 String width = config.get("screen", "resolution_x", "640");
                 String height = config.get("screen", "resolution_y", "480");
-                status.setText("Redo att spela · " + width + " × " + height);
+                status.setText("Ready to play · " + width + " × " + height);
             }
         } catch (IOException error) {
             settings.setEnabled(false);

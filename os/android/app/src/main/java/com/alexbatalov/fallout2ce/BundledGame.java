@@ -33,9 +33,9 @@ final class BundledGame {
                 result.add(new BundledGameExtractor.Entry(path, file.getLong("size"), file.getString("sha256")));
             }
             for (String required : new String[]{"master.dat", "critter.dat", "ce.dat", "fallout2.cfg"}) {
-                if (!names.contains(required)) throw new IOException("Spelpaketet saknar " + required);
+                if (!names.contains(required)) throw new IOException("The game bundle is missing " + required);
             }
             return result;
-        } catch (JSONException malformed) { throw new IOException("Spelpaketets filförteckning kunde inte läsas.", malformed); }
+        } catch (JSONException malformed) { throw new IOException("Could not read the game bundle manifest.", malformed); }
     }
 }

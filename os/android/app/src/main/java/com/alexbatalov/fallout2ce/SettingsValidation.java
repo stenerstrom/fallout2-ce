@@ -13,7 +13,7 @@ final class SettingsValidation {
                 throw new NumberFormatException();
             }
         } catch (NumberFormatException invalid) {
-            throw new IOException("Välj 640–7680 × 480–4320 bildpunkter och skalning 1–4. Efter skalning måste minst 640 × 480 återstå.");
+            throw new IOException("Choose 640–7680 × 480–4320 pixels and a scale of 1–4. At least 640 × 480 pixels must remain after scaling.");
         }
     }
 }

@@ -45,7 +45,7 @@ final class GameCommandHud {
         handle.setAllCaps(false);
         handle.setTextSize(18);
         handle.setTextColor(LauncherUi.GOLD);
-        handle.setContentDescription("Öppna snabbkommandon. Dra för att flytta knappen.");
+        handle.setContentDescription("Open quick commands. Drag to move the button.");
         handle.setPadding(0, 0, 0, 0);
         handle.setMinWidth(0);
         handle.setMinimumWidth(0);
@@ -127,12 +127,12 @@ final class GameCommandHud {
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
         android.widget.TextView title = new android.widget.TextView(activity);
-        title.setText("Snabbkommandon");
+        title.setText("Quick commands");
         title.setTextColor(LauncherUi.GOLD);
         title.setTextSize(20);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
         Button close = button("×", () -> closeMenu());
-        close.setContentDescription("Stäng snabbkommandon");
+        close.setContentDescription("Close quick commands");
         header.addView(close, new LinearLayout.LayoutParams(dp(48), dp(48)));
         panel.addView(header);
 
@@ -142,7 +142,7 @@ final class GameCommandHud {
         scroll.addView(body);
         panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        heading(body, "Spelhastighet");
+        heading(body, "Game speed");
         LinearLayout row = null;
         int index = 0;
         for (int speed : new int[]{50, 100, 150, 200, 300, 400}) {
@@ -157,20 +157,20 @@ final class GameCommandHud {
             row.addView(choice, cell());
         }
 
-        heading(body, "Följeslagare och RPU");
-        LauncherUi.note(activity, body, "Orderna används i spelet. Följeslagarna måste kunna utföra ordern.");
+        heading(body, "Companions and RPU");
+        LauncherUi.note(activity, body, "Orders are sent to the game. Companions must be able to carry out the selected order.");
         try {
             IniDocument config = new IniDocument(new SettingsRepository(activity).read("mods/party_orders.ini"));
             String[][] orders = {
-                {"Loota", "SETTINGS", "LootingOrderKey", "34"},
-                {"Läk gruppen", "SETTINGS", "HealingOrderKey", "33"},
-                {"Samla gruppen", "SETTINGS", "RegroupOrderKey", "19"},
-                {"Sprid ut", "SETTINGS", "SpreadOrderKey", "45"},
-                {"Hölstra vapen", "SETTINGS", "HolsterOrderKey", "35"},
-                {"Plocka upp / loota", "SETTINGS", "PickUpKey", "20"},
-                {"Växla egen lootning", "SETTINGS", "SwitchKey", "11"},
-                {"Byt ammunition", "SETTINGS", "AmmoTypeOrderKey", "48+29"},
-                {"Tillåt / stoppa salvor", "BURST_CONTROL", "burst_key", "32"}
+                {"Loot", "SETTINGS", "LootingOrderKey", "34"},
+                {"Heal party", "SETTINGS", "HealingOrderKey", "33"},
+                {"Regroup", "SETTINGS", "RegroupOrderKey", "19"},
+                {"Spread out", "SETTINGS", "SpreadOrderKey", "45"},
+                {"Holster weapons", "SETTINGS", "HolsterOrderKey", "35"},
+                {"Pick up / loot", "SETTINGS", "PickUpKey", "20"},
+                {"Toggle player looting", "SETTINGS", "SwitchKey", "11"},
+                {"Switch ammo type", "SETTINGS", "AmmoTypeOrderKey", "48+29"},
+                {"Toggle burst fire", "BURST_CONTROL", "burst_key", "32"}
             };
             index = 0;
             for (String[] order : orders) {
@@ -180,27 +180,27 @@ final class GameCommandHud {
                 addCommand(row, order[0], binding);
             }
         } catch (IOException error) {
-            LauncherUi.note(activity, body, "Kunde inte läsa Party Orders: " + error.getMessage());
+            LauncherUi.note(activity, body, "Could not read Party Orders: " + error.getMessage());
         }
 
-        heading(body, "Vanliga kommandon");
+        heading(body, "Common commands");
         String[][] common = {
-            {"Inventarie", "23"}, {"Karaktär", "46"}, {"Pip-Boy", "25"}, {"Karta", "15"},
-            {"Spara", "62"}, {"Ladda", "63"}, {"Byt hand", "48"}, {"Byt vapenläge", "49"},
-            {"Avsluta tur", "57"}, {"Meny / Esc", "1"}
+            {"Inventory", "23"}, {"Character", "46"}, {"Pip-Boy", "25"}, {"Map", "15"},
+            {"Save", "62"}, {"Load", "63"}, {"Switch hand", "48"}, {"Switch weapon mode", "49"},
+            {"End turn", "57"}, {"Menu / Esc", "1"}
         };
         index = 0;
         for (String[] command : common) {
             if (index++ % 2 == 0) row = row(body);
             addCommand(row, command[0], command[1]);
         }
-        heading(body, "Färdigheter");
-        String[] skills = {"Smyga", "Dyrka lås", "Stjäla", "Fällor", "Första hjälpen", "Läkare", "Vetenskap", "Reparera"};
+        heading(body, "Skills");
+        String[] skills = {"Sneak", "Lockpick", "Steal", "Traps", "First Aid", "Doctor", "Science", "Repair"};
         for (int i = 0; i < skills.length; i++) {
             if (i % 2 == 0) row = row(body);
             addCommand(row, skills[i], Integer.toString(i + 2));
         }
-        LauncherUi.note(activity, body, "Dra ≡-knappen för att flytta den. Tangentbindningar följer mods/party_orders.ini. Hastigheten återgår till 1× när appens spelprocess startas om.");
+        LauncherUi.note(activity, body, "Drag the ≡ button to move it. Key bindings follow mods/party_orders.ini. Speed resets to 1× when the game process restarts.");
 
         int width = Math.min(dp(380), root.getWidth() - dp(16));
         int height = Math.min(dp(680), root.getHeight() - dp(64));
@@ -251,7 +251,7 @@ final class GameCommandHud {
             int[] keys = CommandBindings.parse(binding);
             Button command = button(label, () -> send(keys));
             command.setEnabled(keys.length > 0);
-            if (keys.length == 0) command.setText(label + " (av)");
+            if (keys.length == 0) command.setText(label + " (off)");
             row.addView(command, cell());
         } catch (IllegalArgumentException invalid) {
             Button command = button(label + " (?)", () ->

@@ -90,7 +90,7 @@ final class IniDocument {
         if (wantedSection.contains("\n") || wantedSection.contains("\r") || wantedSection.contains("]")
                 || key.isEmpty() || key.contains("=") || key.contains("\n") || key.contains("\r")
                 || value.contains("\n") || value.contains("\r") || value.contains(";") || value.contains("#")) {
-            throw new IllegalArgumentException("Värdet måste vara på en rad och får inte innehålla ; eller #.");
+            throw new IllegalArgumentException("The value must fit on one line and cannot contain ; or #.");
         }
         String current = "";
         int insertion = -1;

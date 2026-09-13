@@ -58,9 +58,9 @@ public class ImportActivity extends Activity {
                     finish();
                 } else {
                     new android.app.AlertDialog.Builder(this)
-                            .setTitle("Importen misslyckades")
-                            .setMessage("Alla spelfiler kunde inte kopieras. Kontrollera mappen och ledigt utrymme, och försök igen.")
-                            .setPositiveButton("Tillbaka", (prompt, which) -> finish()).show();
+                            .setTitle("Import failed")
+                            .setMessage("Could not copy all game files. Check the selected folder and available storage space, then try again.")
+                            .setPositiveButton("Back", (prompt, which) -> finish()).show();
                 }
             });
         }).start();

@@ -19,21 +19,21 @@ The package does not include RPU or the original Fallout 2 game data. The RPU re
 3. Copy this package's `ce.dat` into the root of that test installation. Review `EXAMPLE_fallout2.cfg` alongside the installation's configuration; the example is not an automatic replacement for the installed configuration.
 4. Copy the complete test installation to an accessible folder on your Android device, such as Downloads. Preserve all files and directory structure. Resolve file-name case inconsistencies against the game's configuration.
 5. Install `fallout2-rpu-ce-debug.apk` through Android's package installer.
-6. Launch **Fallout 2 RPU CE (Debug)**, tap **Välj spelfiler**, and select the complete test-installation folder. The app imports its own copy; large installations can take several minutes.
-7. Open **Inställningar** to choose display, interface, gameplay, sound and mod settings. Save your changes, return to the launcher, and tap **Spela**.
+6. Launch **Fallout 2 RPU CE (Debug)**, tap **Choose game files**, and select the complete test-installation folder. The app imports its own copy; large installations can take several minutes.
+7. Open **Settings** to choose display, interface, gameplay, sound and mod settings. Save your changes, return to the launcher, and tap **Play**.
 8. Start a new game. Check Arroyo, map transitions, dialogue, combat and save/load before testing later RPU content.
 
 The engine's Android configuration currently requires Android 7.0/API 24 or newer. The package contains arm64-v8a, armeabi-v7a, x86 and x86_64 native libraries. The previous build passed an initial new-game and save/load test on the connected HONOR tablet; later RPU content still needs testing.
 
 ## Settings before starting the game
 
-The launcher exposes all 97 registered engine settings, grouped by purpose. **Bild** includes resolution presets, custom width/height, and integer scaling. Resolution changes take effect on the next game start. Higher resolution shows more of the map; lower resolution or higher scaling makes text and controls larger. At least 640 × 480 logical pixels must remain after scaling.
+The launcher exposes all 97 registered engine settings, grouped by purpose. **Display** includes resolution presets, custom width/height, and integer scaling. Resolution changes take effect on the next game start. Higher resolution shows more of the map; lower resolution or higher scaling makes text and controls larger. At least 640 × 480 logical pixels must remain after scaling.
 
-**Moddar och alla konfigurationsfiler** lists imported INI/CFG files in the game root, `mods`, and `data/config`. Each file can be edited by section or as full text, including commented and additional options. Not every legacy or optional sfall setting is implemented in FOR:CE. The current RPU 2.4.34 test installation requires `goris_derobing_speed=0` and `critters_walk_faster=0` in `mods/upu.ini` to avoid unimplemented `fs_seek` calls.
+**Mods and all configuration files** lists imported INI/CFG files in the game root, `mods`, and `data/config`. Each file can be edited by section or as full text, including commented and additional options. Not every legacy or optional sfall setting is implemented in FOR:CE. The current RPU 2.4.34 test installation requires `goris_derobing_speed=0` and `critters_walk_faster=0` in `mods/upu.ini` to avoid unimplemented `fs_seek` calls.
 
 Exit through the game's menu before changing settings. The launcher and native engine use separate processes and a shared file lock; controls are disabled while the game is open. Configuration writes preserve unrelated keys and comments and use atomic replacement. A previous version is kept in the app's internal files directory. Existing saves are retained when the APK is installed as an update with the same signing key. Some gameplay and sound preferences can also be restored by loading an old save.
 
-The launcher UI is currently Swedish. Controls tied to other platforms are labeled accordingly. CI checks the generated settings list against `src/settings.h` and `src/settings.cc` and runs Java tests for INI preservation, resolution validation and locking across processes:
+The launcher, settings and command HUD use English. Controls tied to other platforms are labeled accordingly. CI checks the generated settings list against `src/settings.h` and `src/settings.cc` and runs Java tests for INI preservation, resolution validation and locking across processes:
 
 ```sh
 python3 os/android/tools/generate_settings_schema.py --check
@@ -66,7 +66,7 @@ GitHub Actions caches a development signing key for this project branch so conse
 
 ## Private APK with bundled game files
 
-A local build can include the prepared game installation and unpack it automatically on first launch. The complete variant is named **Fallout 2 RPU CE – komplett**, with application ID `io.github.stenerstrom.fallout2rpuce.complete`. It uses separate app data and can be tested alongside the regular Debug variant.
+A local build can include the prepared game installation and unpack it automatically on first launch. The complete variant is named **Fallout 2 RPU CE – Complete**, with application ID `io.github.stenerstrom.fallout2rpuce.complete`. It uses separate app data and can be tested alongside the regular Debug variant.
 
 The asset preparation script excludes saves, backup folders, hidden files, logs and desktop executables. It requires an output directory outside the source repository and produces a manifest containing each file's size and SHA-256. The app verifies files while extracting and skips verified files after an interruption. A file with different existing contents causes an error and is not overwritten. While extraction is incomplete, the launcher cannot start the game. Later APK updates retain an already prepared installation, including its settings and saves; they do not silently replace its game content.
 
@@ -99,4 +99,4 @@ Version 1.3.0-rpu.4 adds a small **≡** button over the game surface. Tap it fo
 
 Commands use SDL's Android key-down/key-up path so that RPU's `HOOK_KEYPRESS` and `key_pressed` handling see them. Modifiers are pressed before the primary key and released afterward. Pending commands are cancelled and held keys released when the activity pauses or is destroyed.
 
-Validation includes native clock tests for speed ratios, continuity, fractional time and 64-bit uptime, 28 keyboard-binding assertions, comparison of all 256 DIK mappings with the fetched SDL source, Java compilation and native builds. The complete APK's game assets are verified against their embedded SHA-256 manifest. Physical play-testing of the new HUD and companion actions remains to be done by the user.
+Validation includes native clock tests for speed ratios, continuity, fractional time and 64-bit uptime, 28 keyboard-binding assertions, comparison of all 256 DIK mappings with the fetched SDL source, Java compilation and native builds. The complete APK's game assets are verified against their embedded SHA-256 manifest. The user reported that the complete 1.3.0-rpu.4 build worked well on the HONOR tablet. Version 1.3.0-rpu.5 changes the Android UI to English and preserves the same game engine, command bindings and application ID; this translation update has not yet been tested on the tablet.

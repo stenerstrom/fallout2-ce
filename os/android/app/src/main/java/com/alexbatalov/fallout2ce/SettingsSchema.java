@@ -18,7 +18,7 @@ final class SettingsSchema {
             while ((length = input.read(buffer)) != -1) output.write(buffer, 0, length);
             return new JSONArray(new String(output.toByteArray(), StandardCharsets.UTF_8));
         } catch (JSONException invalid) {
-            throw new IOException("Inställningsbeskrivningen kunde inte läsas.", invalid);
+            throw new IOException("Could not read the settings descriptions.", invalid);
         }
     }
 

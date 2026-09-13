@@ -58,7 +58,7 @@ final class LauncherUi {
 
     static void error(Activity activity, String message) {
         new android.app.AlertDialog.Builder(activity)
-                .setTitle("Kunde inte slutföra")
+                .setTitle("Could not complete the action")
                 .setMessage(message)
                 .setPositiveButton("OK", null).show();
     }

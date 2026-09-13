@@ -16,7 +16,7 @@ final class SettingsRepository {
 
     File gameDirectory() throws IOException {
         File root = context.getExternalFilesDir(null);
-        if (root == null) throw new IOException("Spelmappen är inte tillgänglig.");
+        if (root == null) throw new IOException("The game folder is not available.");
         return root;
     }
 
@@ -36,7 +36,7 @@ final class SettingsRepository {
         String lower = file.getName().toLowerCase(java.util.Locale.ROOT);
         if (!file.getPath().startsWith(root.getPath() + File.separator)
                 || !(lower.endsWith(".cfg") || lower.endsWith(".ini"))) {
-            throw new IOException("Ogiltig konfigurationsfil.");
+            throw new IOException("Invalid configuration file.");
         }
         return file;
     }
@@ -51,7 +51,7 @@ final class SettingsRepository {
 
     void saveChanges(String relative, List<IniDocument.Entry> changes) throws IOException {
         try (GameSession lock = GameSession.tryAcquire(context.getFilesDir())) {
-            if (lock == null) throw new IOException("Avsluta spelet via spelets meny innan du ändrar inställningarna.");
+            if (lock == null) throw new IOException("Exit through the game menu before changing settings.");
             // Re-read to preserve changes made since the editor opened.
             IniDocument document = new IniDocument(read(relative));
             for (IniDocument.Entry change : changes) document.set(change.section, change.key, change.value);
@@ -63,7 +63,7 @@ final class SettingsRepository {
     private void write(String relative, String text) throws IOException {
         File target = configFile(relative);
         File parent = target.getParentFile();
-        if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Kunde inte skapa konfigurationsmappen.");
+        if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Could not create the configuration folder.");
         String original = read(relative);
         // Keep a user-recoverable previous version, in addition to AtomicFile's crash recovery.
         atomicWrite(new File(context.getFilesDir(), "config-backup-" + relative.replace('/', '_')), original);
@@ -85,7 +85,7 @@ final class SettingsRepository {
 
     void saveText(String relative, String text) throws IOException {
         try (GameSession lock = GameSession.tryAcquire(context.getFilesDir())) {
-            if (lock == null) throw new IOException("Avsluta spelet via spelets meny innan du ändrar inställningarna.");
+            if (lock == null) throw new IOException("Exit through the game menu before changing settings.");
             if (relative.equals("fallout2.cfg")) SettingsValidation.validateScreen(new IniDocument(text));
             write(relative, text);
         }

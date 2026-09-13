@@ -20,14 +20,14 @@ public class BundledInstallActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        LinearLayout body = LauncherUi.page(this, "Förbereder Fallout 2");
-        LauncherUi.note(this, body, "Spelfilerna och RPU finns redan i appen. Första starten tar lite längre tid medan filerna förbereds.");
-        status = LauncherUi.text(this, body, "Startar…", 18, LauncherUi.GOLD);
+        LinearLayout body = LauncherUi.page(this, "Preparing Fallout 2");
+        LauncherUi.note(this, body, "The game files and RPU are included in the app. The first launch takes a little longer while the files are prepared.");
+        status = LauncherUi.text(this, body, "Starting…", 18, LauncherUi.GOLD);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(100);
         body.addView(progress, new LinearLayout.LayoutParams(-1, LauncherUi.dp(this, 32)));
-        retry = LauncherUi.button(this, body, "Försök igen", view -> install());
-        LauncherUi.note(this, body, "Låt appen vara öppen. Om förberedelsen avbryts fortsätter den vid nästa start.");
+        retry = LauncherUi.button(this, body, "Retry", view -> install());
+        LauncherUi.note(this, body, "Keep the app open. If preparation is interrupted, it will resume the next time you open the app.");
         install();
     }
 
@@ -39,7 +39,7 @@ public class BundledInstallActivity extends Activity {
         new Thread(() -> {
             String failure = null;
             try (GameSession session = GameSession.tryAcquire(getFilesDir())) {
-                if (session == null) throw new IOException("Spelet är öppet. Avsluta det och försök igen.");
+                if (session == null) throw new IOException("The game is running. Exit the game and try again.");
                 SettingsRepository repository = new SettingsRepository(this);
                 BundledGameExtractor.extract(repository.gameDirectory(), BundledGame.entries(this),
                         path -> getAssets().open("bundled-game/files/" + path), this::updateProgress);
@@ -55,7 +55,7 @@ public class BundledInstallActivity extends Activity {
                     startActivity(new Intent(this, LauncherActivity.class));
                     finish();
                 } else {
-                    status.setText("Kunde inte förbereda spelet: " + message);
+                    status.setText("Could not prepare the game: " + message);
                     retry.setVisibility(android.view.View.VISIBLE);
                 }
             });
@@ -75,7 +75,7 @@ public class BundledInstallActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
-        if (working) Toast.makeText(this, "Spelfilerna förbereds. Vänta tills det är klart.", Toast.LENGTH_SHORT).show();
+        if (working) Toast.makeText(this, "The game files are being prepared. Please wait until preparation is complete.", Toast.LENGTH_SHORT).show();
         else moveTaskToBack(true);
     }
 }

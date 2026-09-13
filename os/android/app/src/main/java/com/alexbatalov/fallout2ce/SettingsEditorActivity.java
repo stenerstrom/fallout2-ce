@@ -45,7 +45,7 @@ public class SettingsEditorActivity extends Activity {
         try {
             String text = repository.read(file);
             if (getIntent().getBooleanExtra("raw", false)) {
-                LauncherUi.note(this, body, "Avancerad filredigering. Här kan du även lägga till eller aktivera kommenterade inställningar. Behåll sektioner, nyckelnamn och modkrav.");
+                LauncherUi.note(this, body, "Advanced file editing. You can also add settings or enable commented options here. Preserve section names, key names and required mod settings.");
                 rawEditor = new EditText(this);
                 rawEditor.setTag("raw-config");
                 rawEditor.setText(state == null ? text : state.getString("raw", text));
@@ -59,8 +59,8 @@ public class SettingsEditorActivity extends Activity {
                 IniDocument document = new IniDocument(text);
                 JSONObject schema = file.equals("fallout2.cfg") ? SettingsSchema.section(this, section) : null;
                 if (file.equals("fallout2.cfg") && section.equals("screen")) {
-                    LauncherUi.note(this, body, "Högre upplösning visar mer av kartan men gör text och knappar mindre. Lägre upplösning eller högre skalning gör dem större.");
-                    LauncherUi.button(this, body, "Välj en upplösning", view -> chooseResolution()).setTag("resolution-presets");
+                    LauncherUi.note(this, body, "Higher resolution shows more of the map but makes text and buttons smaller. Lower resolution or higher scaling makes them larger.");
+                    LauncherUi.button(this, body, "Choose a resolution", view -> chooseResolution()).setTag("resolution-presets");
                 }
                 List<String> known = new ArrayList<>();
                 if (schema != null) {
@@ -81,10 +81,10 @@ public class SettingsEditorActivity extends Activity {
                     metadata.put("description", entry.description);
                     addField(body, entry.key, entry.value, metadata, state);
                 }
-                if (fields.isEmpty()) LauncherUi.note(this, body, "Inga aktiva inställningar i den här sektionen. Använd filtextredigeringen för att lägga till värden.");
+                if (fields.isEmpty()) LauncherUi.note(this, body, "There are no active settings in this section. Use the full file editor to add values.");
             }
-            LauncherUi.button(this, body, "Spara inställningar", view -> save()).setTag("save-settings");
-            LauncherUi.button(this, body, "Avbryt", view -> finish()).setTag("cancel-settings");
+            LauncherUi.button(this, body, "Save settings", view -> save()).setTag("save-settings");
+            LauncherUi.button(this, body, "Cancel", view -> finish()).setTag("cancel-settings");
         } catch (Exception error) {
             LauncherUi.error(this, error.getMessage());
         }
@@ -133,7 +133,7 @@ public class SettingsEditorActivity extends Activity {
             try { selected = Integer.parseInt(current); } catch (NumberFormatException invalid) { selected = -1; }
             if (selected < 0 || selected >= choices.length()) {
                 selected = choices.length();
-                labels.add("Eget värde: " + current);
+                labels.add("Custom value: " + current);
             }
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, labels);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -182,7 +182,7 @@ public class SettingsEditorActivity extends Activity {
             field.control = control;
             field.value = () -> control.getText().toString().trim();
             if (metadata.has("min") && metadata.has("max")) {
-                LauncherUi.note(this, body, "Tillåtet: " + metadata.optString("min") + "–" + metadata.optString("max"));
+                LauncherUi.note(this, body, "Allowed range: " + metadata.optString("min") + "–" + metadata.optString("max"));
             }
         }
         field.control.setTag("field:" + key);
@@ -211,7 +211,7 @@ public class SettingsEditorActivity extends Activity {
         if (width >= 640 && width <= 7680 && height >= 480 && height <= 4320) sizes.add(new int[]{width,height});
         String[] labels = new String[sizes.size()];
         for (int i = 0; i < sizes.size(); i++) labels[i] = sizes.get(i)[0] + " × " + sizes.get(i)[1];
-        new AlertDialog.Builder(this).setTitle("Spelupplösning")
+        new AlertDialog.Builder(this).setTitle("Game resolution")
                 .setItems(labels, (dialog, index) -> {
                     for (Field field : fields) {
                         if (!(field.control instanceof EditText)) continue;
@@ -219,7 +219,7 @@ public class SettingsEditorActivity extends Activity {
                         if (field.key.equals("resolution_y")) ((EditText)field.control).setText(Integer.toString(sizes.get(index)[1]));
                         if (field.key.equals("scale")) ((EditText)field.control).setText("1");
                     }
-                }).setNegativeButton("Avbryt", null).show();
+                }).setNegativeButton("Cancel", null).show();
     }
 
     private void save() {
@@ -239,7 +239,7 @@ public class SettingsEditorActivity extends Activity {
                 }
                 if (!changes.isEmpty()) repository.saveChanges(file, changes);
             }
-            Toast.makeText(this, "Sparat. Inställningarna används vid nästa spelstart.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Saved. Settings take effect the next time you start the game.", Toast.LENGTH_LONG).show();
             finish();
         } catch (IOException | IllegalArgumentException error) {
             LauncherUi.error(this, error.getMessage());
@@ -257,7 +257,7 @@ public class SettingsEditorActivity extends Activity {
                     || metadata.has("max") && number > metadata.optDouble("max")) throw new NumberFormatException();
         } catch (NumberFormatException invalid) {
             field.control.requestFocus();
-            throw new IOException("Ogiltigt värde för " + metadata.optString("label", field.key) + ".");
+            throw new IOException("Invalid value for " + metadata.optString("label", field.key) + ".");
         }
     }
 
@@ -272,7 +272,7 @@ public class SettingsEditorActivity extends Activity {
         if (repository == null) return;
         try {
             if (repository.gameRunning()) {
-                Toast.makeText(this, "Avsluta spelet innan du ändrar inställningar.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Exit the game before changing settings.", Toast.LENGTH_LONG).show();
                 finish();
             }
         } catch (IOException error) { LauncherUi.error(this, error.getMessage()); finish(); }

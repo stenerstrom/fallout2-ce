@@ -35,10 +35,10 @@ final class CommandBindings {
                 dik = value.startsWith("0x") || value.startsWith("0X")
                         ? Integer.parseInt(value.substring(2), 16) : Integer.parseInt(value);
             } catch (NumberFormatException invalid) {
-                throw new IllegalArgumentException("Ogiltig tangentkombination: " + text);
+                throw new IllegalArgumentException("Invalid key combination: " + text);
             }
             if (dik <= 0 || dik >= ANDROID_KEYS.length || ANDROID_KEYS[dik] < 0) {
-                throw new IllegalArgumentException("Tangenten stöds inte på Android: " + part);
+                throw new IllegalArgumentException("This key is not supported on Android: " + part);
             }
             keys.add(ANDROID_KEYS[dik]);
         }

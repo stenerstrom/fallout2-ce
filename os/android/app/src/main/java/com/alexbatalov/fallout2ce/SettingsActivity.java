@@ -19,8 +19,8 @@ public class SettingsActivity extends Activity {
     }
 
     private void showSections() {
-        LinearLayout body = LauncherUi.page(this, "Inställningar");
-        LauncherUi.note(this, body, "Ändringarna används nästa gång du startar spelet. Vissa spel- och ljudval kan även följa med en sparning.");
+        LinearLayout body = LauncherUi.page(this, "Settings");
+        LauncherUi.note(this, body, "Changes take effect the next time you start the game. Some gameplay and sound preferences may also be restored from a save.");
         try {
             JSONArray sections = SettingsSchema.load(this);
             for (int i = 0; i < sections.length(); i++) {
@@ -30,21 +30,21 @@ public class SettingsActivity extends Activity {
                 LauncherUi.button(this, body, title, view -> openEditor("fallout2.cfg", key, title, false))
                         .setTag("section:" + key);
             }
-            LauncherUi.button(this, body, "Moddar och alla konfigurationsfiler", view -> showFiles());
-            LauncherUi.note(this, body, "Modval kan kräva funktioner som FOR:CE ännu saknar. Snabbare gång och Goris-animationen bör vara avstängda i den nuvarande RPU-installationen.");
-            LauncherUi.button(this, body, "Tillbaka", view -> finish());
+            LauncherUi.button(this, body, "Mods and all configuration files", view -> showFiles());
+            LauncherUi.note(this, body, "Mod options may require features that FOR:CE does not yet support. Faster walking and the Goris animation option should stay disabled in the current RPU installation.");
+            LauncherUi.button(this, body, "Back", view -> finish());
         } catch (Exception error) { LauncherUi.error(this, error.getMessage()); }
     }
 
     private void showFiles() {
-        LinearLayout body = LauncherUi.page(this, "Alla konfigurationsfiler");
-        LauncherUi.note(this, body, "Här finns samtliga importerade INI- och CFG-filer i spelroten, mods och data/config. Bildinställningar för CE ändras i fallout2.cfg. Äldre f2_res.ini används främst vid första migreringen.");
+        LinearLayout body = LauncherUi.page(this, "All configuration files");
+        LauncherUi.note(this, body, "All imported INI and CFG files in the game folder, mods and data/config are listed here. Change CE display settings in fallout2.cfg. The older f2_res.ini is mainly used during initial migration.");
         try {
             for (String file : repository.configFiles()) {
                 LauncherUi.button(this, body, file, view -> showFile(file));
             }
         } catch (IOException error) { LauncherUi.error(this, error.getMessage()); }
-        LauncherUi.button(this, body, "Tillbaka till inställningar", view -> showSections());
+        LauncherUi.button(this, body, "Back to settings", view -> showSections());
     }
 
     private void showFile(String file) {
@@ -53,12 +53,12 @@ public class SettingsActivity extends Activity {
             LinkedHashSet<String> sections = new LinkedHashSet<>();
             for (IniDocument.Entry entry : new IniDocument(repository.read(file)).entries()) sections.add(entry.section);
             for (String section : sections) {
-                String title = section.isEmpty() ? "Allmänt" : section;
+                String title = section.isEmpty() ? "General" : section;
                 LauncherUi.button(this, body, title, view -> openEditor(file, section, title, false));
             }
-            LauncherUi.button(this, body, "Redigera hela filtexten", view -> openEditor(file, "", file, true));
+            LauncherUi.button(this, body, "Edit full file", view -> openEditor(file, "", file, true));
         } catch (IOException error) { LauncherUi.error(this, error.getMessage()); }
-        LauncherUi.button(this, body, "Tillbaka till filer", view -> showFiles());
+        LauncherUi.button(this, body, "Back to files", view -> showFiles());
     }
 
     private void openEditor(String file, String section, String title, boolean raw) {
@@ -70,7 +70,7 @@ public class SettingsActivity extends Activity {
         super.onResume();
         try {
             if (repository.gameRunning()) {
-                android.widget.Toast.makeText(this, "Avsluta spelet innan du ändrar inställningar.", android.widget.Toast.LENGTH_LONG).show();
+                android.widget.Toast.makeText(this, "Exit the game before changing settings.", android.widget.Toast.LENGTH_LONG).show();
                 finish();
             }
         } catch (IOException error) { LauncherUi.error(this, error.getMessage()); finish(); }

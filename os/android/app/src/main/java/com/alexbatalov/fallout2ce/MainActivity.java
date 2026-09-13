@@ -13,9 +13,9 @@ public class MainActivity extends SDLActivity {
         String error = null;
         try {
             gameSession = GameSession.tryAcquire(getFilesDir());
-            if (gameSession == null) error = "Inställningarna håller på att sparas. Försök starta spelet igen.";
+            if (gameSession == null) error = "Settings are being saved. Try starting the game again.";
         } catch (IOException failure) {
-            error = "Spelets inställningar kunde inte låsas: " + failure.getMessage();
+            error = "Could not lock the game settings: " + failure.getMessage();
         }
         if (error != null) {
             // This activity runs in :game. Return to the launcher before loading SDL.
