@@ -1,0 +1,27 @@
+// Isolated smoke test: never include this script in a game bundle.
+procedure start;
+procedure start begin
+    if game_loaded then begin
+        if get_sfall_global_int("FPTST001") == 0 then begin
+            set_fake_perk("Temporary Perk", 2, 154, "Owned temporary description");
+            if has_fake_perk("Temporary Perk") == 2 then debug_msg("FAKE_PERKS_TEST: opcode rank PASS");
+            set_fake_perk("Temporary Perk", 3, 154, "Updated description");
+            if has_fake_perk("Temporary Perk") == 3 then debug_msg("FAKE_PERKS_TEST: update PASS");
+            set_fake_perk("Temporary Perk", 0, 154, "");
+            if has_fake_perk("Temporary Perk") == 0 then debug_msg("FAKE_PERKS_TEST: removal PASS");
+            set_fake_trait("Temporary Trait", 1, 154, "Temporary trait");
+            if has_fake_trait("Temporary Trait") == 1 then debug_msg("FAKE_PERKS_TEST: trait PASS");
+            set_fake_trait("Temporary Trait", 0, 154, "");
+            set_fake_perk("Slot Jinxer", 1, 154, "You have learned how to beat the slot machines.");
+            set_global_var(756, 1);
+            set_sfall_global("FPTST001", 1);
+            debug_msg("FAKE_PERKS_TEST: initial state READY TO SAVE");
+        end else begin
+            if (has_fake_perk("Slot Jinxer") == 1) and (global_var(756) == 1) and (has_fake_trait("Temporary Trait") == 0) then begin
+                debug_msg("FAKE_PERKS_TEST: persisted state PASS");
+            end else begin
+                debug_msg("FAKE_PERKS_TEST: persisted state FAIL");
+            end
+        end
+    end
+end

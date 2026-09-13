@@ -42,6 +42,19 @@ static XBase* gXbaseHead;
 // 0x6B24D4 init
 static bool gXbaseExitHandlerRegistered;
 
+XFile* xfileOpenMemory(std::shared_ptr<const std::vector<unsigned char>> data)
+{
+    XFile* stream = static_cast<XFile*>(malloc(sizeof(XFile)));
+    if (stream == nullptr) return nullptr;
+    stream->type = XFILE_TYPE_MEMORY;
+    stream->memory = new (std::nothrow) MemoryFile(std::move(data));
+    if (stream->memory == nullptr) {
+        free(stream);
+        return nullptr;
+    }
+    return stream;
+}
+
 // 0x4DED6C xfclose
 int xfileClose(XFile* stream)
 {
@@ -50,6 +63,10 @@ int xfileClose(XFile* stream)
     int rc;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        delete stream->memory;
+        rc = 0;
+        break;
     case XFILE_TYPE_DFILE:
         rc = dfileClose(stream->dfile);
         break;
@@ -185,6 +202,9 @@ int xfilePrintFormattedArgs(XFile* stream, const char* format, va_list args)
     int rc;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        rc = -1;
+        break;
     case XFILE_TYPE_DFILE:
         rc = dfilePrintFormattedArgs(stream->dfile, format, args);
         break;
@@ -207,6 +227,9 @@ int xfileReadChar(XFile* stream)
     int ch;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        ch = stream->memory->get();
+        break;
     case XFILE_TYPE_DFILE:
         ch = dfileReadChar(stream->dfile);
         break;
@@ -231,6 +254,9 @@ char* xfileReadString(char* string, int size, XFile* stream)
     char* result;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        result = stream->memory->gets(string, size);
+        break;
     case XFILE_TYPE_DFILE:
         result = dfileReadString(string, size, stream->dfile);
         break;
@@ -253,6 +279,9 @@ int xfileWriteChar(int ch, XFile* stream)
     int rc;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        rc = -1;
+        break;
     case XFILE_TYPE_DFILE:
         rc = dfileWriteChar(ch, stream->dfile);
         break;
@@ -276,6 +305,9 @@ int xfileWriteString(const char* string, XFile* stream)
     int rc;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        rc = -1;
+        break;
     case XFILE_TYPE_DFILE:
         rc = dfileWriteString(string, stream->dfile);
         break;
@@ -299,6 +331,9 @@ size_t xfileRead(void* ptr, size_t size, size_t count, XFile* stream)
     size_t elementsRead;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        elementsRead = stream->memory->read(ptr, size, count);
+        break;
     case XFILE_TYPE_DFILE:
         elementsRead = dfileRead(ptr, size, count, stream->dfile);
         break;
@@ -333,6 +368,9 @@ size_t xfileWrite(const void* ptr, size_t size, size_t count, XFile* stream)
     size_t elementsWritten;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        elementsWritten = 0;
+        break;
     case XFILE_TYPE_DFILE:
         elementsWritten = dfileWrite(ptr, size, count, stream->dfile);
         break;
@@ -360,6 +398,9 @@ int xfileSeek(XFile* stream, long offset, int origin)
     int result;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        result = stream->memory->seek(offset, origin);
+        break;
     case XFILE_TYPE_DFILE:
         result = dfileSeek(stream->dfile, offset, origin);
         break;
@@ -382,6 +423,9 @@ long xfileTell(XFile* stream)
     long pos;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        pos = stream->memory->tell();
+        break;
     case XFILE_TYPE_DFILE:
         pos = dfileTell(stream->dfile);
         break;
@@ -402,6 +446,9 @@ void xfileRewind(XFile* stream)
     assert(stream); // "stream", "xfile.c", 608
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        stream->memory->seek(0, SEEK_SET);
+        break;
     case XFILE_TYPE_DFILE:
         dfileRewind(stream->dfile);
         break;
@@ -422,6 +469,9 @@ int xfileEof(XFile* stream)
     int rc;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        rc = stream->memory->eof();
+        break;
     case XFILE_TYPE_DFILE:
         rc = dfileEof(stream->dfile);
         break;
@@ -444,6 +494,9 @@ long xfileGetSize(XFile* stream)
     long fileSize;
 
     switch (stream->type) {
+    case XFILE_TYPE_MEMORY:
+        fileSize = stream->memory->size();
+        break;
     case XFILE_TYPE_DFILE:
         fileSize = dfileGetSize(stream->dfile);
         break;

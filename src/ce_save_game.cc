@@ -72,7 +72,16 @@ bool ceSaveGameData(const char* path)
         return false;
     }
 
+    if (!configSetInt(config.get(), "format", "version", 2)) return false;
     return configWrite(config.get(), path, false);
+}
+
+bool ceSaveRequiresSfallData(const char* path)
+{
+    if (compat_access(path, 0) != 0) return false;
+    ScopedConfig config { path, false };
+    int version = 0;
+    return config && configGetInt(config.get(), "format", "version", &version) && version >= 2;
 }
 
 void ceLoadGameData(const char* path)

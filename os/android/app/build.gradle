@@ -96,8 +96,8 @@ android {
         targetSdk 32
         manifestPlaceholders = [appLabel: project.hasProperty('PRIVATE_GAME_ASSETS')
                 ? 'Wasteland Collection' : '@string/app_name']
-        versionCode 9
-        versionName '1.4.0-alpha.1'
+        versionCode 10
+        versionName '1.4.0-alpha.2'
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'

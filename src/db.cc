@@ -6,6 +6,7 @@
 
 #include "platform_compat.h"
 #include "sfall_filesystem.h"
+#include "sfall_hero_appearance.h"
 #include "xfile.h"
 
 namespace fallout {
@@ -156,13 +157,9 @@ static File* fileOpenImpl(const char* filename, const char* mode, bool useAliase
         && strchr(mode, '+') == nullptr;
 
     if (useAliases && readOnly) {
-        char resolvedPath[COMPAT_MAX_PATH];
-        if (sfallFileSystemResolveAlias(filename, resolvedPath, sizeof(resolvedPath))) {
-            File* stream = fileOpenImpl(resolvedPath, mode, false);
-            if (stream != nullptr) {
-                return stream;
-            }
-        }
+        auto data = sfallFileSystemData(filename, true);
+        if (data) return xfileOpenMemory(std::move(data));
+        if (File* hero = heroAppearanceOpen(filename, mode)) return hero;
     }
 
     return xfileOpen(filename, mode);

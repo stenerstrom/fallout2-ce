@@ -35,6 +35,7 @@
 #include "object.h"
 #include "palette.h"
 #include "perk.h"
+#include "sfall_fake_perks.h"
 #include "platform_compat.h"
 #include "proto.h"
 #include "scripts.h"
@@ -633,7 +634,7 @@ static void characterEditorMessageListReset()
 }
 
 // 0x5700F8 old_str1
-static char gCharacterEditorCardTitle[48];
+static char gCharacterEditorCardTitle[64];
 
 // 0x570128 old_str2
 static char gPerkDialogCardTitle[48];
@@ -2170,6 +2171,37 @@ static void characterEditorDrawFolders()
     }
 }
 
+// The renderer temporarily edits descriptions while wrapping. Own the card
+// strings independently of the script state, which can change between frames.
+static std::string gFakePerkCardTitle;
+static std::string gFakePerkCardDescription;
+
+static bool characterEditorDrawFakePerks(FakePerkKind kind)
+{
+    bool selected = false;
+    for (const auto& perk : gFakePerks.entries(kind)) {
+        if (perk.owner != 0 || perk.level <= 0) continue;
+        std::string label = perk.name;
+        if (kind == FakePerkKind::Perk && perk.level > 1) {
+            label += " (" + std::to_string(perk.level) + ")";
+        }
+        if (characterEditorFolderViewDrawString(label.c_str())) {
+            SkillDexFrmId image = perk.image >= 0 && perk.image <= 4095
+                ? SkillDexFrmId(static_cast<SkillDexFrameId>(perk.image))
+                : SkillDexFrmId(SkillDexFrameId::Perks);
+            if (!image.exist()) image = SkillDexFrameId::Perks;
+            gCharacterEditorFolderCardFrmId = image;
+            gFakePerkCardTitle = perk.name;
+            gFakePerkCardDescription = perk.description;
+            gCharacterEditorFolderCardTitle = gFakePerkCardTitle.data();
+            gCharacterEditorFolderCardSubtitle = nullptr;
+            gCharacterEditorFolderCardDescription = gFakePerkCardDescription.data();
+            selected = true;
+        }
+    }
+    return selected;
+}
+
 // 0x434238 list_perks
 static void characterEditorDrawPerksFolder()
 {
@@ -2180,7 +2212,7 @@ static void characterEditorDrawPerksFolder()
 
     characterEditorFolderViewClear();
 
-    if (gCharacterEditorTempTraits[0] != -1) {
+    if (gCharacterEditorTempTraits[0] != -1 || gFakePerks.hasOwned(FakePerkKind::Trait)) {
         // TRAITS
         string = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 156);
         if (characterEditorFolderViewDrawHeading(string)) {
@@ -2216,6 +2248,8 @@ static void characterEditorDrawPerksFolder()
         }
     }
 
+    hasContent = characterEditorDrawFakePerks(FakePerkKind::Trait) || hasContent;
+
     Perk perk;
 
     for (perk = PERK_FIRST; perk < PERK_COUNT; perk++) {
@@ -2224,7 +2258,7 @@ static void characterEditorDrawPerksFolder()
         }
     }
 
-    if (perk != PERK_COUNT) {
+    if (perk != PERK_COUNT || gFakePerks.hasOwned(FakePerkKind::Perk)) {
         // PERKS
         string = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 109);
         characterEditorFolderViewDrawHeading(string);
@@ -2267,6 +2301,8 @@ static void characterEditorDrawPerksFolder()
             }
         }
     }
+
+    hasContent = characterEditorDrawFakePerks(FakePerkKind::Perk) || hasContent;
 
     if (!hasContent) {
         gCharacterEditorFolderCardFrmId = SkillDexFrameId::Perks;
@@ -5070,7 +5106,7 @@ static int characterEditorDrawCardWithOptions(const SkillDexFrmId& frmId, const 
 
     fontSetCurrent(102);
 
-    fontDrawText(gCharacterEditorWindowBuffer + 640 * 272 + 348, name, 640, 640, COLOR_BLACK);
+    fontDrawText(gCharacterEditorWindowBuffer + 640 * 272 + 348, name, 266, 640, COLOR_BLACK);
     int nameFontLineHeight = fontGetLineHeight();
     if (attributes != nullptr) {
         int nameWidth = fontGetStringWidth(name);
@@ -5095,7 +5131,7 @@ static int characterEditorDrawCardWithOptions(const SkillDexFrmId& frmId, const 
     }
 
     int y = 315;
-    for (short i = 0; i < beginningsCount - 1; i++) {
+    for (short i = 0; i < beginningsCount - 1 && y + descriptionFontLineHeight <= windowGetHeight(gCharacterEditorWindow); i++) {
         short beginning = beginnings[i];
         short ending = beginnings[i + 1];
         char c = description[ending];
@@ -5111,7 +5147,7 @@ static int characterEditorDrawCardWithOptions(const SkillDexFrmId& frmId, const 
         }
     }
 
-    strcpy(gCharacterEditorCardTitle, name);
+    snprintf(gCharacterEditorCardTitle, sizeof(gCharacterEditorCardTitle), "%s", name);
     gCharacterEditorCardFrmId = frmId;
     gCharacterEditorCardDrawn = true;
 

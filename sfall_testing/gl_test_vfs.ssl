@@ -1,0 +1,32 @@
+// Test only: enable both walking and Goris options before loading this script.
+procedure start;
+procedure start begin
+    variable id, frames, fps;
+    if game_loaded then begin
+        id = fs_find("art\\critters\\nmcoppab.frm");
+        if id >= 0 then begin
+            fs_seek(id, 8);
+            frames = fs_read_short(id);
+            fs_seek(id, 4);
+            fps = fs_read_short(id);
+            if (frames > 8) and (fps == frames) then debug_msg("RPU_VFS_TEST: walking FRM PASS");
+            else debug_msg("RPU_VFS_TEST: walking FRM FAIL");
+        end else debug_msg("RPU_VFS_TEST: walking override MISSING");
+        id = fs_find("art\\critters\\madethag.frm");
+        if id >= 0 then begin
+            fs_seek(id, 4);
+            if fs_read_short(id) == 50 then debug_msg("RPU_VFS_TEST: Goris FRM PASS");
+            else debug_msg("RPU_VFS_TEST: Goris FRM FAIL");
+        end else debug_msg("RPU_VFS_TEST: Goris override MISSING");
+        id = fs_create("test-vfs.bin", 12);
+        fs_write_short(id, -123);
+        fs_write_int(id, 12345678);
+        fs_write_float(id, 1.25);
+        fs_seek(id, 0);
+        if (fs_read_short(id) == -123) and (fs_read_int(id) == 12345678)
+            and (fs_read_float(id) == 1.25) and (fs_pos(id) == 10) and (fs_size(id) == 12)
+            then debug_msg("RPU_VFS_TEST: opcode roundtrip PASS");
+            else debug_msg("RPU_VFS_TEST: opcode roundtrip FAIL");
+        fs_delete(id);
+    end
+end

@@ -80,6 +80,10 @@
             android:exported="false"
             android:theme="@style/LauncherTheme"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+        <activity android:name=".SaveGamesActivity"
+            android:exported="false"
+            android:theme="@style/LauncherTheme"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
         <activity android:name=".SettingsActivity"
             android:exported="false"
             android:theme="@style/LauncherTheme"

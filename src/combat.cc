@@ -6749,6 +6749,14 @@ static void damageModInit()
 {
     gDamageCalculationType = DAMAGE_CALCULATION_TYPE_VANILLA;
     configGetInt(&gContentConfig, CONTENT_CONFIG_COMBAT_SECTION, "damage_formula", &gDamageCalculationType, DAMAGE_CALCULATION_TYPE_VANILLA);
+    // The collection selector also sets Misc/DamageFormula for RPU's Ammo INI
+    // Loader. A single INI write keeps script data and engine math in agreement.
+    int rpuFormula = -1;
+    configGetInt(&gSfallConfig, "RPU", "DamageFormula", &rpuFormula);
+    if (rpuFormula == 0 || rpuFormula == 1 || rpuFormula == 5) {
+        gDamageCalculationType = rpuFormula;
+        debugPrint("RPU damage formula: %d\n", gDamageCalculationType);
+    }
 
     gBonusHthDamageFix = true;
     configGetBool(&gContentConfig, CONTENT_CONFIG_COMBAT_SECTION, "bonus_hth_damage_fix", &gBonusHthDamageFix);

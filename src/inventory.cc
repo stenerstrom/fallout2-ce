@@ -13,6 +13,7 @@
 #include "actions.h"
 #include "animation.h"
 #include "art.h"
+#include "sfall_hero_appearance.h"
 #include "color.h"
 #include "combat.h"
 #include "combat_ai.h"
@@ -1583,7 +1584,8 @@ FrmId inventoryComputeCritterFrmId(Object* critter, int basePid, Object* rightHa
         }
     }
 
-    return CritterFrmId(inventoryFrameId, anim, animationCode, rotation);
+    FrmId result = CritterFrmId(inventoryFrameId, anim, animationCode, rotation);
+    return critter == gDude ? FrmId(heroAppearanceFid(result.fid())) : result;
 }
 
 // inventory_msg_init
@@ -3145,7 +3147,7 @@ static void _adjust_fid()
         interfaceGetCurrentHand(),
         ANIM_STAND,
         ROTATION_NE);
-    gInventoryWindowDudeFrmId = scriptHooks_AdjustFid(frmId, frmId);
+    gInventoryWindowDudeFrmId = scriptHooks_AdjustFid(frmId, FrmId(heroAppearanceBaseFid(frmId.fid())));
 }
 
 // 0x4717E4 use_inventory_on

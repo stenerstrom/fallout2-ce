@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "art.h"
+#include "sfall_hero_appearance.h"
 #include "character_editor.h"
 #include "combat.h"
 #include "config.h"
@@ -857,6 +858,7 @@ int _proto_update_init(Object* obj)
 // 0x49F984 proto_dude_update_gender
 int _proto_dude_update_gender()
 {
+    heroAppearanceSyncGender();
     Proto* proto;
     if (protoGetProto(0x1000000, &proto) == -1) {
         return -1;

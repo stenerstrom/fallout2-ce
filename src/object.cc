@@ -9,6 +9,7 @@
 #include "animation.h"
 #include "animation_defs.h"
 #include "art.h"
+#include "sfall_hero_appearance.h"
 #include "color.h"
 #include "combat.h"
 #include "combat_ai.h"
@@ -1559,12 +1560,12 @@ int objectSetFrmId(Object* obj, const FrmId& frmId, Rect* dirtyRect)
     if (dirtyRect != nullptr) {
         objectGetRect(obj, dirtyRect);
 
-        obj->fid = frmId.fid();
+        obj->fid = obj == gDude ? heroAppearanceFid(frmId.fid()) : frmId.fid();
 
         objectGetRect(obj, &new_rect);
         rectUnion(dirtyRect, &new_rect, dirtyRect);
     } else {
-        obj->fid = frmId.fid();
+        obj->fid = obj == gDude ? heroAppearanceFid(frmId.fid()) : frmId.fid();
     }
 
     return 0;
@@ -3663,7 +3664,10 @@ int _obj_save_dude(File* stream)
     gDude->flags &= ~OBJECT_NO_SAVE;
     gDude->sid = -1;
 
+    int visibleFid = gDude->fid;
+    gDude->fid = heroAppearanceBaseFid(visibleFid);
     int rc = _obj_save_obj(stream, gDude);
+    gDude->fid = visibleFid;
 
     gDude->sid = field_78;
     gDude->flags |= OBJECT_NO_SAVE;

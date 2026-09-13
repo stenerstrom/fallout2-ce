@@ -53,6 +53,8 @@
 #include "scripts.h"
 #include "settings.h"
 #include "sfall_arrays.h"
+#include "sfall_fake_perks.h"
+#include "sfall_hero_appearance.h"
 #include "sfall_callbacks.h"
 #include "sfall_config.h"
 #include "sfall_ext.h"
@@ -469,6 +471,7 @@ void gameReset()
     messageListRepositoryReset();
     scriptHooksReset();
     sfallArraysReset();
+    gFakePerks.reset();
     sfall_gl_scr_reset();
     sfall_ini_cache_clear();
     sfallOnGameReset();
@@ -486,6 +489,7 @@ void gameExit()
     scriptHooksExit();
     sfall_gl_scr_exit();
     sfallArraysExit();
+    gFakePerks.reset();
     sfallListsExit();
     sfall_gl_vars_exit();
     premadeCharactersExit();
@@ -626,6 +630,9 @@ int gameHandleKey(int eventCode, bool isInCombatMode)
 
             _gmouse_handle_event(mouseX, mouseY, mouseEvent);
         }
+        break;
+    case KEY_CTRL_F12:
+        if (!isInCombatMode && interfaceBarEnabled()) heroAppearanceSelect(-1);
         break;
     case KEY_CTRL_Q:
     case KEY_CTRL_X:

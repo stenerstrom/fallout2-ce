@@ -1,0 +1,23 @@
+// Isolated smoke test only. Changes the test player's outfit and appearance.
+procedure start;
+procedure start begin
+    if game_loaded then begin
+        if get_sfall_global_int("HAPTST01") == 0 then begin
+            set_hero_race(1);
+            if get_sfall_global_int("HAp_Race") == 1 then debug_msg("HERO_TEST: body change PASS");
+            set_hero_race(0);
+            set_hero_style(1);
+            if get_sfall_global_int("HApStyle") == 1 then debug_msg("HERO_TEST: style change PASS");
+            set_hero_style(99);
+            if get_sfall_global_int("HApStyle") == 1 then debug_msg("HERO_TEST: missing style preserves choice PASS");
+            metarule3(107, dude_obj, 16777227, 0);
+            if obj_art_fid(dude_obj) == 16777227 then debug_msg("HERO_TEST: script FID remains compatible PASS");
+            set_sfall_global("HAPTST01", 1);
+            debug_msg("HERO_TEST: READY TO SAVE");
+        end else begin
+            if (get_sfall_global_int("HApStyle") == 1) and (get_sfall_global_int("HAp_Race") == 0)
+                then debug_msg("HERO_TEST: persisted appearance PASS");
+                else debug_msg("HERO_TEST: persisted appearance FAIL");
+        end
+    end
+end

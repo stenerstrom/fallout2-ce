@@ -57,7 +57,7 @@ bool sfall_gl_vars_save(File* stream)
         return false;
     }
 
-    GlobalVarEntry entry = { 0 };
+    GlobalVarEntry entry {};
     for (auto& pair : sfall_gl_vars_state->vars) {
         entry.key = pair.first;
         entry.value = pair.second;
@@ -72,34 +72,33 @@ bool sfall_gl_vars_save(File* stream)
 
 bool sfall_gl_vars_load(File* stream)
 {
+    if (!sfall_gl_vars_state) return false;
     int count;
-    if (fileRead(&count, sizeof(count), 1, stream) != 1) {
+    if (fileRead(&count, sizeof(count), 1, stream) != 1 || count < 0 || count > 1000000)
         return false;
-    }
+    long remaining = fileGetSize(stream) - fileTell(stream);
+    if (remaining < 0 || static_cast<size_t>(count) > static_cast<size_t>(remaining) / sizeof(GlobalVarEntry))
+        return false;
 
-    sfall_gl_vars_state->vars.reserve(count);
-
+    std::unordered_map<uint64_t, int> pending;
+    pending.reserve(count);
     GlobalVarEntry entry;
-    while (count > 0) {
-        if (fileRead(&entry, sizeof(entry), 1, stream) != 1) {
-            return false;
-        }
-
-        sfall_gl_vars_state->vars[entry.key] = static_cast<int>(entry.value);
-
-        count--;
+    for (int index = 0; index < count; index++) {
+        if (fileRead(&entry, sizeof(entry), 1, stream) != 1) return false;
+        pending[entry.key] = entry.value;
     }
-
+    sfall_gl_vars_state->vars.swap(pending);
     return true;
 }
 
 bool sfall_gl_vars_store(const char* key, int value)
 {
-    if (strlen(key) != 8) {
+    if (key == nullptr || strlen(key) != 8) {
         return false;
     }
 
-    uint64_t numericKey = *(reinterpret_cast<const uint64_t*>(key));
+    uint64_t numericKey;
+    memcpy(&numericKey, key, sizeof(numericKey));
     return sfall_gl_vars_store(numericKey, value);
 }
 
@@ -110,11 +109,12 @@ bool sfall_gl_vars_store(int key, int value)
 
 bool sfall_gl_vars_fetch(const char* key, int& value)
 {
-    if (strlen(key) != 8) {
+    if (key == nullptr || strlen(key) != 8) {
         return false;
     }
 
-    uint64_t numericKey = *(reinterpret_cast<const uint64_t*>(key));
+    uint64_t numericKey;
+    memcpy(&numericKey, key, sizeof(numericKey));
     return sfall_gl_vars_fetch(numericKey, value);
 }
 
@@ -125,6 +125,7 @@ bool sfall_gl_vars_fetch(int key, int& value)
 
 static bool sfall_gl_vars_store(uint64_t key, int value)
 {
+    if (!sfall_gl_vars_state) return false;
     auto it = sfall_gl_vars_state->vars.find(key);
     if (it == sfall_gl_vars_state->vars.end()) {
         sfall_gl_vars_state->vars.emplace(key, value);
@@ -141,6 +142,7 @@ static bool sfall_gl_vars_store(uint64_t key, int value)
 
 static bool sfall_gl_vars_fetch(uint64_t key, int& value)
 {
+    if (!sfall_gl_vars_state) return false;
     auto it = sfall_gl_vars_state->vars.find(key);
     if (it == sfall_gl_vars_state->vars.end()) {
         return false;

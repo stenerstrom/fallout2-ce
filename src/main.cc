@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "art.h"
+#include "sfall_hero_appearance.h"
 #include "autorun.h"
 #include "character_selector.h"
 #include "color.h"
@@ -444,6 +445,7 @@ static void mainLoop()
         sfall_gl_scr_process_main();
 
         gameHandleKey(keyCode, false);
+        heroAppearanceProcessRequest();
 
         scriptsHandleRequests();
 

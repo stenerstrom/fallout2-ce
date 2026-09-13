@@ -9,7 +9,9 @@
 #include "platform_compat.h"
 #include "scripts.h"
 #include "sfall_arrays.h"
+#include "sfall_fake_perks.h"
 #include "sfall_global_vars.h"
+#include "sfall_config.h"
 
 namespace fallout {
 
@@ -90,13 +92,24 @@ void sfallLoadMods()
     } else {
         debugPrint("Error opening %s for read\n", loadOrderFilepath);
     }
+    bool alternativeExplosions = false;
+    configGetBool(&gSfallConfig, "RPU", "AlternativeExplosions", &alternativeExplosions);
+    if (alternativeExplosions) {
+        const char* path = "mods/rpu_alternative_explosions.dat";
+        if (compat_access(path, 0) == 0 && dbOpen(path, nullptr) != -1)
+            debugPrint("Loaded optional RPU alternative explosions.\n");
+        else
+            debugPrint("RPU alternative explosions requested, but the archive could not be loaded.\n");
+    }
+
 }
 
 // Binary layout of sfallgv.sav (must match sfall's SaveGame2 / LoadGame_Before order):
 //   global vars | nextObjectId(4) | addedYears(4) | fakeTraitsCount(4) |
 //   fakePerksCount(4) | fakeSelectablePerksCount(4) | arrays | drugPidsCount(4)
 //
-// Sections that CE doesn't implement are written/read as zero.
+// Fake perk records use explicit sfall-compatible little-endian encoding.
+// nextObjectId retains the historical CE byte order for existing CE saves.
 
 bool sfallSaveGameData(File* stream)
 {
@@ -110,14 +123,13 @@ bool sfallSaveGameData(File* stream)
         return false;
     }
 
-    // Write zeros for CE-unimplemented fields: addedYears, fakeTraitsCount,
-    // fakePerksCount, fakeSelectablePerksCount
-    int32_t zero = 0;
-    for (int32_t i = 0; i < 4; i++) {
-        if (fileWrite(&zero, sizeof(zero), 1, stream) != 1) {
-            debugPrint("LOADSAVE (SFALL): ** Error saving stub fields **\n");
-            return false;
-        }
+    int32_t zero = 0; // addedYears (not used by CE)
+    if (fileWrite(&zero, sizeof(zero), 1, stream) != 1
+        || !gFakePerks.save([stream](const void* bytes, size_t size) {
+            return fileWrite(bytes, 1, size, stream) == size;
+        })) {
+        debugPrint("LOADSAVE (SFALL): ** Error saving fake perks **\n");
+        return false;
     }
 
     if (!sfallArraysSave(stream)) {
@@ -140,20 +152,26 @@ bool sfallLoadGameData(File* stream)
         return false;
     }
 
-    int32_t nextObjectId;
-    if (fileReadInt32(stream, &nextObjectId) == -1) {
+    gFakePerks.reset();
+    // Legacy CE files can end exactly after globals. A partial field is corrupt.
+    if (fileTell(stream) == fileGetSize(stream)) {
         scriptsRestoreUniqueObjectIdCounter(OBJECT_ID_UNIQUE_START);
-        return true; // old save, stop gracefully
+        return true;
     }
-
-    // Skip sections CE doesn't implement: addedYears, fakeTraitsCount,
-    // fakePerksCount, fakeSelectablePerksCount
-    int32_t ignored;
-    for (int32_t i = 0; i < 4; i++) {
-        if (fileRead(&ignored, sizeof(ignored), 1, stream) != 1) {
-            scriptsRestoreUniqueObjectIdCounter(nextObjectId);
-            return true; // old save, stop gracefully
-        }
+    int32_t nextObjectId;
+    if (fileReadInt32(stream, &nextObjectId) == -1) return false;
+    if (fileTell(stream) == fileGetSize(stream)) {
+        scriptsRestoreUniqueObjectIdCounter(nextObjectId);
+        return true;
+    }
+    int32_t addedYears;
+    if (fileRead(&addedYears, sizeof(addedYears), 1, stream) != 1) return false;
+    FakePerkState pendingPerks;
+    if (!pendingPerks.load([stream](void* bytes, size_t size) {
+        return fileRead(bytes, 1, size, stream) == size;
+    })) {
+        debugPrint("LOADSAVE (SFALL): ** Invalid fake perk data **\n");
+        return false;
     }
 
     if (!sfallArraysLoad(stream)) {
@@ -162,6 +180,7 @@ bool sfallLoadGameData(File* stream)
         return false;
     }
 
+    gFakePerks = std::move(pendingPerks);
     scriptsRestoreUniqueObjectIdCounter(nextObjectId);
 
     return true;

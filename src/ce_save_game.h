@@ -5,6 +5,7 @@ namespace fallout {
 
 bool ceSaveGameData(const char* path);
 void ceLoadGameData(const char* path);
+bool ceSaveRequiresSfallData(const char* path);
 
 } // namespace fallout
 

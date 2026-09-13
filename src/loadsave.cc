@@ -51,6 +51,8 @@
 #include "settings.h"
 #include "sfall_callbacks.h"
 #include "sfall_ext.h"
+#include "sfall_fake_perks.h"
+#include "sfall_hero_appearance.h"
 #include "sfall_global_scripts.h"
 #include "sfall_global_vars.h"
 #include "skill.h"
@@ -1978,19 +1980,28 @@ static int lsgPerformSaveGame()
 
     debugPrint("LOADSAVE: Total save data written: %ld bytes.\n", fileTell(_flptr));
 
-    fileClose(_flptr);
+    if (fileClose(_flptr) != 0) {
+        debugPrint("LOADSAVE: Could not flush the main save file.\n");
+        _RestoreSave();
+        backgroundSoundResume();
+        return -1;
+    }
 
     // SFALL: Save sfallgv.sav.
     snprintf(_gmpath, sizeof(_gmpath), "%s\\%s%.2d\\", "SAVEGAME", "SLOT", _slot_cursor + 1);
     strcat(_gmpath, "sfallgv.sav");
 
     _flptr = fileOpen(_gmpath, "wb");
+    bool sfallSaved = false;
     if (_flptr != nullptr) {
-        bool saved = sfallSaveGameData(_flptr);
-        fileClose(_flptr);
-        if (!saved) {
-            return -1;
-        }
+        sfallSaved = sfallSaveGameData(_flptr);
+        if (fileClose(_flptr) != 0) sfallSaved = false;
+    }
+    if (!sfallSaved) {
+        debugPrint("LOADSAVE (SFALL): ** Could not write complete sfall data **\n");
+        _RestoreSave();
+        backgroundSoundResume();
+        return -1;
     }
 
     char ceSavePath[COMPAT_MAX_PATH];
@@ -2098,22 +2109,36 @@ static int lsgLoadGameInSlot(int slot)
     debugPrint("LOADSAVE: Total load data read: %ld bytes.\n", fileTell(_flptr));
     fileClose(_flptr);
 
+    char ceSavePath[COMPAT_MAX_PATH];
+    snprintf(ceSavePath, sizeof(ceSavePath), "%s\\SAVEGAME\\SLOT%.2d\\ce.sav", _patches, _slot_cursor + 1);
+    // A legacy save without this sidecar must not retain previous perks.
+    gFakePerks.reset();
     // SFALL: Load sfallgv.sav.
     snprintf(_gmpath, sizeof(_gmpath), "%s\\%s%.2d\\", "SAVEGAME", "SLOT", _slot_cursor + 1);
     strcat(_gmpath, "sfallgv.sav");
 
     _flptr = fileOpen(_gmpath, "rb");
+    if (_flptr == nullptr && ceSaveRequiresSfallData(ceSavePath)) {
+        debugPrint("LOADSAVE: Required sfall state is missing.\n");
+        gameReset();
+        _loadingGame = false;
+        _loadingMapId = -1;
+        return -1;
+    }
     if (_flptr != nullptr) {
         bool loaded = sfallLoadGameData(_flptr);
         fileClose(_flptr);
         if (!loaded) {
+            gameReset();
+            _loadingGame = false;
+            _loadingMapId = -1;
             return -1;
         }
     }
 
-    char ceSavePath[COMPAT_MAX_PATH];
-    snprintf(ceSavePath, sizeof(ceSavePath), "%s\\SAVEGAME\\SLOT%.2d\\ce.sav", _patches, _slot_cursor + 1);
     ceLoadGameData(ceSavePath);
+    // Restore the saved look before gender/model refresh can seed defaults.
+    heroAppearanceLoad();
 
     snprintf(_str, sizeof(_str), "%s\\", "MAPS");
     MapDirErase(_str, "BAK");

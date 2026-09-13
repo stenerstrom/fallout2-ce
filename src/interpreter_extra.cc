@@ -7,6 +7,7 @@
 #include "actions.h"
 #include "animation.h"
 #include "art.h"
+#include "sfall_hero_appearance.h"
 #include "art_defs.h"
 #include "color.h"
 #include "combat.h"
@@ -4725,7 +4726,7 @@ static void opGetObjectFid(Program* program)
 
     int fid = 0;
     if (object != nullptr) {
-        fid = object->fid;
+        fid = object == gDude ? heroAppearanceBaseFid(object->fid) : object->fid;
     } else {
         scriptPredefinedError(program, "obj_art_fid", SCRIPT_ERROR_OBJECT_IS_NULL);
     }

@@ -443,6 +443,7 @@ ConstBuffer2D artGetFrameBuffer(const Art* art, int frame, Rotation rotation);
 CritterFrameId _art_alias_num(CritterFrameId index);
 int artCritterFrmIdShouldRun(const FrmId& frmId);
 int artListIndex(ObjectType objectType, const char* name);
+int artCritterListSize();
 Art* artLoad(const char* path);
 int artRead(const char* path, unsigned char* data);
 int artWrite(const char* path, unsigned char* data);

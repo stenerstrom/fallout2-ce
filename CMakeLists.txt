@@ -276,6 +276,7 @@ set(FALLOUT_ENGINE_SOURCES
     "src/worldmap.h"
     "src/xfile.cc"
     "src/xfile.h"
+    "src/memory_file.h"
 )
 
 set(FALLOUT_PLATFORM_SOURCES
@@ -295,6 +296,10 @@ set(FALLOUT_PLATFORM_SOURCES
     "src/settings.h"
     "src/sfall_config.cc"
     "src/sfall_config.h"
+    "src/sfall_hero_appearance.cc"
+    "src/sfall_hero_appearance.h"
+    "src/sfall_fake_perks.cc"
+    "src/sfall_fake_perks.h"
     "src/sfall_ext.cc"
     "src/sfall_ext.h"
     "src/sfall_filesystem.cc"

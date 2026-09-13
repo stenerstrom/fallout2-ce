@@ -18,6 +18,7 @@ public class MainActivity extends SDLActivity {
             if (gameSession == null) error = "Settings are being saved. Try starting the game again.";
             else if (BundledGame.needsInstall(this) || !new SettingsRepository(this).hasGameData())
                 error = "Prepare this game from the library before playing.";
+            if (error == null) SaveGameArchive.recover(new SettingsRepository(this).gameDirectory());
         } catch (IOException | IllegalArgumentException failure) {
             error = "Could not lock the game settings: " + failure.getMessage();
         }

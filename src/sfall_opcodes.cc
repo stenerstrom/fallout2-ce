@@ -38,6 +38,8 @@
 #include "sfall_animation.h"
 #include "sfall_arrays.h"
 #include "sfall_filesystem.h"
+#include "sfall_fake_perks.h"
+#include "sfall_hero_appearance.h"
 #include "sfall_global_scripts.h"
 #include "sfall_global_vars.h"
 #include "sfall_ini.h"
@@ -1220,7 +1222,6 @@ static void op_get_light_level(Program* program)
     programStackPushInteger(program, lightGetAmbientIntensity());
 }
 
-// note: might need to be updated when Hero Appearance is implemented
 static void op_refresh_pc_art(Program* program)
 {
     if (gDude == nullptr) {
@@ -2174,9 +2175,9 @@ static void op_set_sfall_return(Program* program)
 
 static void op_fs_copy(Program* program)
 {
-    char* source = programStackPopString(program);
-    char* path = programStackPopString(program);
-    programStackPushInteger(program, sfallFileSystemCopy(path, source));
+    std::string source = programStackPopString(program);
+    std::string path = programStackPopString(program);
+    programStackPushInteger(program, sfallFileSystemCopy(path.c_str(), source.c_str()));
 }
 
 static void op_fs_find(Program* program)
@@ -2189,8 +2190,66 @@ static void op_fs_create(Program* program)
 {
     int size = programStackPopInteger(program);
     char* path = programStackPopString(program);
-    programPrintError("fs_create: not implemented!");
-    programStackPushInteger(program, -1);
+    programStackPushInteger(program, sfallFileSystemCreate(path, size));
+}
+
+template <int Width>
+static void op_fs_write_integer(Program* program)
+{
+    int value = programStackPopInteger(program);
+    int id = programStackPopInteger(program);
+    sfallFileSystemWriteInteger(id, value, Width);
+}
+
+template <int Width>
+static void op_fs_read_integer(Program* program)
+{
+    int id = programStackPopInteger(program);
+    programStackPushInteger(program, sfallFileSystemReadInteger(id, Width));
+}
+
+static void op_fs_write_float(Program* program)
+{
+    float value = programStackPopValue(program).asFloat();
+    int id = programStackPopInteger(program);
+    uint32_t bits;
+    static_assert(sizeof(bits) == sizeof(value));
+    memcpy(&bits, &value, sizeof(bits));
+    sfallFileSystemWriteInteger(id, bits, 4);
+}
+
+static void op_fs_read_float(Program* program)
+{
+    int id = programStackPopInteger(program);
+    int32_t bits = sfallFileSystemReadInteger(id, 4);
+    float value;
+    memcpy(&value, &bits, sizeof(value));
+    programStackPushFloat(program, value);
+}
+
+template <bool Terminate>
+static void op_fs_write_string(Program* program)
+{
+    std::string value = programStackPopString(program);
+    int id = programStackPopInteger(program);
+    sfallFileSystemWriteString(id, value.c_str(), Terminate);
+}
+
+static void op_fs_size(Program* program)
+{
+    programStackPushInteger(program, sfallFileSystemSize(programStackPopInteger(program)));
+}
+
+static void op_fs_pos(Program* program)
+{
+    programStackPushInteger(program, sfallFileSystemPosition(programStackPopInteger(program)));
+}
+
+static void op_fs_seek(Program* program)
+{
+    int position = programStackPopInteger(program);
+    int id = programStackPopInteger(program);
+    sfallFileSystemSeek(id, position);
 }
 
 static void op_fs_delete(Program* program)
@@ -2199,16 +2258,59 @@ static void op_fs_delete(Program* program)
     sfallFileSystemDelete(id);
 }
 
+static void op_set_fake_perk(Program* program)
+{
+    // Copy immediately: later stack pops may release temporary script strings.
+    std::string description = programStackPopString(program);
+    int image = programStackPopInteger(program);
+    int level = programStackPopInteger(program);
+    std::string name = programStackPopString(program);
+    gFakePerks.set(FakePerkKind::Perk, name, level, image, description);
+}
+
+static void op_set_fake_trait(Program* program)
+{
+    std::string description = programStackPopString(program);
+    int image = programStackPopInteger(program);
+    int active = programStackPopInteger(program);
+    std::string name = programStackPopString(program);
+    gFakePerks.set(FakePerkKind::Trait, name, active, image, description);
+}
+
+static void op_has_fake_perk(Program* program)
+{
+    ProgramValue value = programStackPopValue(program);
+    int rank = 0;
+    if (value.isString()) {
+        rank = gFakePerks.rank(FakePerkKind::Perk,
+            programGetString(program, value.opcode, value.integerValue));
+    } else if (value.isInt()) {
+        rank = gFakePerks.rankById(value.integerValue);
+    }
+    programStackPushInteger(program, rank);
+}
+
+static void op_has_fake_trait(Program* program)
+{
+    std::string name = programStackPopString(program);
+    programStackPushInteger(program, gFakePerks.rank(FakePerkKind::Trait, name));
+}
+
+static void op_hero_select_win(Program* program)
+{
+    heroAppearanceSelect(programStackPopInteger(program));
+}
+
 static void op_set_hero_style(Program* program)
 {
     int style = programStackPopInteger(program);
-    programPrintError("set_hero_style: not implemented!");
+    heroAppearanceSetStyle(style);
 }
 
 static void op_set_hero_race(Program* program)
 {
     int race = programStackPopInteger(program);
-    programPrintError("set_hero_race: not implemented!");
+    heroAppearanceSetRace(race);
 }
 
 // Note: opcodes should pop arguments off the stack in reverse order
@@ -2484,13 +2586,17 @@ void sfallOpcodesInit()
     interpreterRegisterOpcode(0x81B6, op_set_car_current_town);
 
     // 0x81bb - void set_fake_perk(string name, int level, int image, string desc)
+    interpreterRegisterOpcode(0x81BB, op_set_fake_perk);
     // 0x81bc - void set_fake_trait(string name, int active, int image, string desc)
+    interpreterRegisterOpcode(0x81BC, op_set_fake_trait);
     // 0x81bd - void set_selectable_perk(string name, int active, int image, string desc)
     // 0x81be - void set_perkbox_title(string title)
     // 0x81bf - void hide_real_perks()
     // 0x81c0 - void show_real_perks()
     // 0x81c1 - int has_fake_perk(string name/int extraPerkID)
+    interpreterRegisterOpcode(0x81C1, op_has_fake_perk);
     // 0x81c2 - int has_fake_trait(string name)
+    interpreterRegisterOpcode(0x81C2, op_has_fake_trait);
     // 0x81c3 - void perk_add_mode(int type)
     // 0x81c4 - void clear_selectable_perks()
     // 0x8225 - void remove_trait(Trait trait)
@@ -2585,20 +2691,33 @@ void sfallOpcodesInit()
     // 0x81f9 - int   fs_find(string path)
     interpreterRegisterOpcode(0x81f9, op_fs_find);
     // 0x81fa - void  fs_write_byte(int id, int data)
+    interpreterRegisterOpcode(0x81fa, op_fs_write_integer<1>);
     // 0x81fb - void  fs_write_short(int id, int data)
+    interpreterRegisterOpcode(0x81fb, op_fs_write_integer<2>);
     // 0x81fc - void  fs_write_int(int id, int data)
+    interpreterRegisterOpcode(0x81fc, op_fs_write_integer<4>);
     // 0x81fd - void  fs_write_float(int id, int data)
+    interpreterRegisterOpcode(0x81fd, op_fs_write_float);
     // 0x81fe - void  fs_write_string(int id, string data)
+    interpreterRegisterOpcode(0x81fe, op_fs_write_string<true>);
     // 0x8208 - void  fs_write_bstring(int id, string data)
+    interpreterRegisterOpcode(0x8208, op_fs_write_string<false>);
     // 0x8209 - int   fs_read_byte(int id)
+    interpreterRegisterOpcode(0x8209, op_fs_read_integer<1>);
     // 0x820a - int   fs_read_short(int id)
+    interpreterRegisterOpcode(0x820a, op_fs_read_integer<2>);
     // 0x820b - int   fs_read_int(int id)
+    interpreterRegisterOpcode(0x820b, op_fs_read_integer<4>);
     // 0x820c - float fs_read_float(int id)
+    interpreterRegisterOpcode(0x820c, op_fs_read_float);
     // 0x81ff - void  fs_delete(int id)
     interpreterRegisterOpcode(0x81ff, op_fs_delete);
     // 0x8200 - int   fs_size(int id)
+    interpreterRegisterOpcode(0x8200, op_fs_size);
     // 0x8201 - int   fs_pos(int id)
+    interpreterRegisterOpcode(0x8201, op_fs_pos);
     // 0x8202 - void  fs_seek(int id, int pos)
+    interpreterRegisterOpcode(0x8202, op_fs_seek);
     // 0x8203 - void  fs_resize(int id, int size)
 
     // 0x8204 - int  get_proto_data(int pid, int offset)
@@ -2628,6 +2747,7 @@ void sfallOpcodesInit()
     interpreterRegisterOpcode(0x8212, op_get_version_patch);
 
     // 0x8213 - void hero_select_win(int)
+    interpreterRegisterOpcode(0x8213, op_hero_select_win);
     // 0x8214 - void set_hero_race(int style)
     interpreterRegisterOpcode(0x8214, op_set_hero_race);
     // 0x8215 - void set_hero_style(int style)

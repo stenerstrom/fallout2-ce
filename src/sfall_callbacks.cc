@@ -9,6 +9,7 @@
 #include "reaction.h"
 #include "script_sound.h"
 #include "sfall_filesystem.h"
+#include "sfall_hero_appearance.h"
 #include "sfall_object_name.h"
 #include "sfall_script_hooks.h"
 #include "stat.h"
@@ -29,11 +30,13 @@ void sfallOnGameInit()
 
 void sfallOnAfterGameInit()
 {
+    heroAppearanceInitialize();
     return;
 }
 
 void sfallOnGameExit()
 {
+    heroAppearanceReset();
     scriptSoundExit();
     return;
 }
@@ -45,6 +48,7 @@ void sfallOnGameReset()
     gameDialogResetPartyMemberCcMsgIds();
     reactionResetThresholds();
     scriptSoundReset();
+    heroAppearanceReset();
     sfallFileSystemReset();
     sfallObjectNameReset();
     statResetUnspentApBonuses();
@@ -53,6 +57,7 @@ void sfallOnGameReset()
 
 void sfallOnBeforeGameStart()
 {
+    heroAppearanceLoad();
     return;
 }
 

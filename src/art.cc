@@ -18,6 +18,7 @@
 #include "memory.h"
 #include "proto.h"
 #include "settings.h"
+#include "sfall_hero_appearance.h"
 
 #include <algorithm>
 #include <memory>
@@ -477,6 +478,11 @@ void artRender(const FrmId& frmId, unsigned char* dest, int width, int height, i
     frmImage.unlock();
 }
 
+int artCritterListSize()
+{
+    return gArtListDescriptions[OBJ_TYPE_CRITTER].fileNamesLength;
+}
+
 int artListIndex(ObjectType objectType, const char* name)
 {
     if (!objectTypeIsValid(objectType)) return -1;
@@ -568,11 +574,13 @@ int artCopyFileName(const FrmId& frmId, char* dest)
 
     ptr = &(gArtListDescriptions[frmId.objectType()]);
 
-    if (!frmId.hasFid() || frmId.frameId().id >= ptr->fileNamesLength) {
+    int frame = frmId.objectType() == OBJ_TYPE_CRITTER
+        ? heroAppearanceBaseFrame(frmId.frameId().id) : frmId.frameId().id;
+    if (!frmId.hasFid() || frame >= ptr->fileNamesLength) {
         return -1;
     }
 
-    strcpy(dest, ptr->fileNames + frmId.frameId().id * ART_NAME_SIZE);
+    strcpy(dest, ptr->fileNames + frame * ART_NAME_SIZE);
 
     return 0;
 }
@@ -688,6 +696,9 @@ char* FrmId::buildPath(int fid, char* path)
         return nullptr;
     }
 
+    bool hero = objectType == OBJ_TYPE_CRITTER && heroAppearanceIsFrame(frmId);
+    if (hero) frmId = heroAppearanceBaseFrame(frmId);
+
     if (frmId >= gArtListDescriptions[objectType].fileNamesLength) {
         return nullptr;
     }
@@ -701,9 +712,9 @@ char* FrmId::buildPath(int fid, char* path)
             return nullptr;
         }
         if (rotation > ROTATION_NE) {
-            snprintf(path, COMPAT_MAX_PATH, "%s%s%s\\%s%c%c.fr%c", _cd_path_base, "art\\", gArtListDescriptions[OBJ_TYPE_CRITTER].name, gArtListDescriptions[OBJ_TYPE_CRITTER].fileNames + fileNameOffset, critterWeaponCode, critterAnimationCode, rotation + ('0' - 1));
+            snprintf(path, COMPAT_MAX_PATH, "%s%s%s\\%s%s%c%c.fr%c", _cd_path_base, "art\\", gArtListDescriptions[OBJ_TYPE_CRITTER].name, hero ? "_" : "", gArtListDescriptions[OBJ_TYPE_CRITTER].fileNames + fileNameOffset, critterWeaponCode, critterAnimationCode, rotation + ('0' - 1));
         } else {
-            snprintf(path, COMPAT_MAX_PATH, "%s%s%s\\%s%c%c.frm", _cd_path_base, "art\\", gArtListDescriptions[OBJ_TYPE_CRITTER].name, gArtListDescriptions[OBJ_TYPE_CRITTER].fileNames + fileNameOffset, critterWeaponCode, critterAnimationCode);
+            snprintf(path, COMPAT_MAX_PATH, "%s%s%s\\%s%s%c%c.frm", _cd_path_base, "art\\", gArtListDescriptions[OBJ_TYPE_CRITTER].name, hero ? "_" : "", gArtListDescriptions[OBJ_TYPE_CRITTER].fileNames + fileNameOffset, critterWeaponCode, critterAnimationCode);
         }
     } else if (objectType == OBJ_TYPE_HEAD) {
         char headSuffix = _head2[animType];
@@ -928,14 +939,19 @@ ConstBuffer2D artGetFrameBuffer(const Art* art, int frame, Rotation rotation)
 // 0x419998
 CritterFrameId _art_alias_num(CritterFrameId index)
 {
-    return _anon_alias[static_cast<int>(index)];
+    int base = heroAppearanceBaseFrame(static_cast<int>(index));
+    if (base < 0 || base >= artCritterListSize()) return CritterFrameId::Invalid;
+    int alias = static_cast<int>(_anon_alias[base]);
+    if (heroAppearanceIsFrame(static_cast<int>(index))) alias += artCritterListSize();
+    return static_cast<CritterFrameId>(alias);
 }
 
 // 0x4199AC
 int artCritterFrmIdShouldRun(const FrmId& frmId)
 {
     if (frmId.objectType() == OBJ_TYPE_CRITTER && frmId.valid() && frmId.hasFid()) {
-        return gArtCritterFidShoudRunData[frmId.frameId().id];
+        int frame = heroAppearanceBaseFrame(frmId.frameId().id);
+        return frame < artCritterListSize() ? gArtCritterFidShoudRunData[frame] : 0;
     }
 
     return 0;
@@ -1656,7 +1672,7 @@ int FrmId::buildAliasFid(int fid)
         || anim == ANIM_ELECTRIFIED_TO_NOTHING_SF
         || anim == ANIM_FIRE_DANCE
         || anim == ANIM_CALLED_SHOT_PIC) {
-        CritterFrameId aliasedFrameId = _anon_alias[frameIdFromFid(fid)];
+        CritterFrameId aliasedFrameId = _art_alias_num(static_cast<CritterFrameId>(frameIdFromFid(fid)));
         return buildFid(
             OBJ_TYPE_CRITTER,
             static_cast<int>(aliasedFrameId),

@@ -1,6 +1,18 @@
 # Plan för komplett RPU-stöd i FOR:CE på Android
 
-Datum: 2026-09-13. Status: plan för kommande implementation.
+Datum: 2026-09-13. Status: implementation pågår; kandidat 1.4.0-alpha.2.
+
+## Avstämning efter nästa implementationssteg
+
+- Alpha.1 levererade spelbiblioteket med separata RPU-, Sonora- och Nevada-profiler samt manifeststyrd innehållsuppdatering.
+- Alpha.2 implementerar namngivna fake perks/traits med sparat tillstånd, ändringsbara virtuella filer för RPU:s gång- och Goris-skript, Hero Appearance och dess pekkommando, valbara skadeformler/explosioner samt export/återställning av sparningar.
+- De riktade C++-/Java-testerna och Mac-scenarierna finns i [testprotokollet](rpu-alpha2-tests.md). Dessa ersätter inte en genomspelning eller verifiering på Honor-plattan.
+- Referensen för RPU 2.4.34 är nu låst till taggens commit 6cd291f64a48782ed45fe116e5fb453ecbfc5488. De tre källskripten för EPA-belöningen, gånghastigheten och Goris är identiska i den lokala forken och målversionen. En jämförelse av hela innehållet och ett reproducerbart komplett RPU-bygge återstår.
+- Tidigare INI-val bevaras vid uppgradering. De gamla avstängningarna kan nu ändras i **Settings → Restoration Project options**. Nya installationer kan använda fungerande animationsval.
+- Innehållsuppdateraren kan återuppta aktivering efter avbrott. Fullständig återställning av en äldre innehållsversion och sammanfogning av ändrade konfigurationsnycklar är fortfarande separata återstående arbeten.
+- Nästa verifiering gäller EPA:s faktiska uppdragsvägar, följeslagarorder, utrustning/strid med varje utseende samt Sonora/Dayglow och Nevadas progression.
+
+Avsnitten nedan bevarar den ursprungliga planen och dess baslinje; formuleringar om då saknade funktioner beskriver utgångsläget. Aktuell implementerad omfattning och begränsningar anges ovan och i testprotokollet.
 
 ## Mål och omfattning
 
@@ -10,7 +22,7 @@ Utgångspunkten är det fungerande paketet med officiell RPU 2.4.34. Alla medfö
 
 Sfall-funktioner prioriteras utifrån vad RPU och dess medföljande komponenter faktiskt behöver. Plattformberoende beteenden implementeras med portabla CE-funktioner. Befintliga funktioner får verifieringsuppgifter; saknade eller felaktiga funktioner får implementationsuppgifter.
 
-## Verifierat nuläge
+## Ursprunglig baslinje före alpha.1 och alpha.2
 
 - Motor och Android-gränssnitt: commit `06c5973b5370368658b286017e4954f86fe67e09`, gren `codex/rpu-android`. Engelska APK:n är 1.3.0-rpu.5, versionCode 8. Den är byggd, kontrollerad och överförd till plattan för användarens installation.
 - De återanvända native-biblioteken kommer från `ab1dc4d4695ffd3ef4e78ef39ac65986af9657da`. Originaldata och officiell RPU 2.4.34 ingår i det privata paketet.

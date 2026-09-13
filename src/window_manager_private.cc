@@ -97,7 +97,7 @@ int _win_list_select(const char* title, const char* const* fileList, int fileLis
 // 0x4DA70C
 int _win_list_select_at(const char* title, const char* const* items, int itemsLength, ListSelectionHandler* callback, int x, int y, ColorWithFlags color, int start)
 {
-    if (!gWindowSystemInitialized) {
+    if (!gWindowSystemInitialized || items == nullptr || itemsLength <= 0) {
         return -1;
     }
 
@@ -200,8 +200,8 @@ int _win_list_select_at(const char* title, const char* const* items, int itemsLe
     }
 
     _win_text(win,
-        items + start,
-        itemsLength < listViewCapacity ? itemsLength : listViewCapacity,
+        items + scrollOffset,
+        std::min(itemsLength - scrollOffset, listViewCapacity),
         listViewWidth,
         listViewX,
         listViewY,

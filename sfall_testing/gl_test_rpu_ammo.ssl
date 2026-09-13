@@ -1,0 +1,16 @@
+// Test only: RPU Ammo INI Loader must initialize before this global.
+procedure start;
+procedure start begin
+    variable formula, mult, divisor;
+    if game_loaded then begin
+        formula = get_ini_setting("ddraw.ini|Misc|DamageFormula");
+        mult = get_proto_data(14, 52);
+        divisor = get_proto_data(14, 56);
+        debug_msg("RPU_AMMO_TEST: formula=" + formula + " rocket=" + mult + "/" + divisor);
+        if ((formula == 1) and (mult == 1) and (divisor == 1)) or
+           ((formula == 5) and (mult == 3) and (divisor == 2)) or
+           ((formula == 0) and (mult == 1) and (divisor == 1))
+            then debug_msg("RPU_AMMO_TEST: PASS");
+            else debug_msg("RPU_AMMO_TEST: FAIL");
+    end
+end

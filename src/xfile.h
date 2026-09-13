@@ -6,6 +6,7 @@
 #include <zlib.h>
 
 #include "dfile.h"
+#include "memory_file.h"
 #include "platform_compat.h"
 
 namespace fallout {
@@ -14,6 +15,7 @@ typedef enum XFileType {
     XFILE_TYPE_FILE,
     XFILE_TYPE_DFILE,
     XFILE_TYPE_GZFILE,
+    XFILE_TYPE_MEMORY,
 } XFileType;
 
 // A universal database of files.
@@ -40,6 +42,7 @@ typedef struct XFile {
         FILE* file;
         DFile* dfile;
         gzFile gzfile;
+        MemoryFile* memory;
     };
 } XFile;
 
@@ -48,6 +51,7 @@ typedef struct XList {
     char** fileNames;
 } XList;
 
+XFile* xfileOpenMemory(std::shared_ptr<const std::vector<unsigned char>> data);
 int xfileClose(XFile* stream);
 XFile* xfileOpen(const char* filename, const char* mode);
 int xfilePrintFormatted(XFile* xfile, const char* format, ...);

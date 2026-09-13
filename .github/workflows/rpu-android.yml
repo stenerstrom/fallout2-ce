@@ -78,7 +78,7 @@ jobs:
           activities = {a.attrib[android + 'name'] for a in root.findall('./application/activity')}
           assert 'com.alexbatalov.fallout2ce.MainActivity' in activities
           assert 'com.alexbatalov.fallout2ce.ImportActivity' in activities
-          for name in ('LauncherActivity', 'SettingsActivity', 'SettingsEditorActivity', 'BundledInstallActivity'):
+          for name in ('LauncherActivity', 'SettingsActivity', 'SettingsEditorActivity', 'BundledInstallActivity', 'SaveGamesActivity'):
               assert 'com.alexbatalov.fallout2ce.' + name in activities
           launcher = root.find("./application/activity[@"+android+"name='com.alexbatalov.fallout2ce.LauncherActivity']")
           assert launcher.find("./intent-filter/category[@"+android+"name='android.intent.category.LAUNCHER']") is not None
@@ -99,6 +99,7 @@ jobs:
                       continue
                   elf = apk.read(entry)
                   assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeSetSpeed' in elf
+                  assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeOpenAppearance' in elf
                   assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeGetSpeed' in elf
                   assert elf[:6] == b'\x7fELF\x02\x01', entry.filename
                   phoff = struct.unpack_from('<Q', elf, 32)[0]
@@ -135,6 +136,11 @@ jobs:
               'build_type': 'Debug',
               'application_id': 'io.github.stenerstrom.fallout2rpuce.debug',
               'rpu_bundled': False,
+              'rpu_target_reference': {
+                  'repository': 'BGforgeNet/Fallout2_Restoration_Project',
+                  'tag': 'v2.4.34',
+                  'commit': '6cd291f64a48782ed45fe116e5fb453ecbfc5488',
+              },
               'rpu_source_reference': {
                   'repository': 'stenerstrom/Fallout2_Restoration_Project',
                   'commit': 'c14d687e4c401f64f7ef4ee255de95f07a91a6e5',

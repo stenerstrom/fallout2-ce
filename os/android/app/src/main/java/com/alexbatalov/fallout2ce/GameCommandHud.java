@@ -35,6 +35,7 @@ final class GameCommandHud {
     private float touchX, touchY, startX, startY;
     private boolean dragging;
 
+    private static native void nativeOpenAppearance();
     private static native int nativeGetSpeed();
     private static native void nativeSetSpeed(int percent);
 
@@ -158,6 +159,14 @@ final class GameCommandHud {
         }
 
         if (GameProfiles.current(activity) == GameProfile.RPU) {
+        heading(body, "Hero Appearance");
+        LauncherUi.note(activity, body, "Change your look while exploring. The choice is stored with your saved game.");
+        Button appearance = button("Change appearance", () -> {
+            closeMenu();
+            gameView.requestFocus();
+            nativeOpenAppearance();
+        });
+        body.addView(appearance);
         heading(body, "Companions and RPU");
         LauncherUi.note(activity, body, "Orders are sent to the game. Companions must be able to carry out the selected order.");
         try {
