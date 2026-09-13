@@ -29,6 +29,12 @@ public class LauncherActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        try {
+            if (BundledGame.available(this) && !repository.hasGameData()) {
+                startActivity(new Intent(this, BundledInstallActivity.class));
+                return;
+            }
+        } catch (IOException failure) { LauncherUi.error(this, failure.getMessage()); }
         refresh();
         String error = getIntent().getStringExtra("launch_error");
         if (error != null) {
@@ -72,7 +78,7 @@ public class LauncherActivity extends Activity {
     private void startGame() {
         try {
             if (!repository.hasGameData()) {
-                startActivity(new Intent(this, ImportActivity.class));
+                startActivity(new Intent(this, BundledGame.available(this) ? BundledInstallActivity.class : ImportActivity.class));
                 return;
             }
             if (!repository.gameRunning()) {

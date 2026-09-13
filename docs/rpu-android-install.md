@@ -62,3 +62,27 @@ Pay particular attention to EPA appearance changes, animation speed options, the
 ## Build updates
 
 GitHub Actions caches a development signing key for this project branch so consecutive builds can usually be installed as updates. If that cache is lost, Android may reject an update signed with a new key. Preserve your saves before uninstalling any test app. Release signing is a separate future step.
+
+
+## Private APK with bundled game files
+
+A local build can include the prepared game installation and unpack it automatically on first launch. The complete variant is named **Fallout 2 RPU CE – komplett**, with application ID `io.github.stenerstrom.fallout2rpuce.complete`. It uses separate app data and can be tested alongside the regular Debug variant.
+
+The asset preparation script excludes saves, backup folders, hidden files, logs and desktop executables. It requires an output directory outside the source repository and produces a manifest containing each file's size and SHA-256. The app verifies files while extracting and skips verified files after an interruption. A file with different existing contents causes an error and is not overwritten. While extraction is incomplete, the launcher cannot start the game. Later APK updates retain an already prepared installation, including its settings and saves; they do not silently replace its game content.
+
+Example (run from the repository root, with Java 11 and Android SDK 32 configured locally):
+
+```sh
+python3 os/android/tools/prepare_private_bundle.py \
+  /path/to/prepared/Fallout2-RPU /path/outside/repo/private-bundle \
+  --native-apk /path/to/verified/fallout2-rpu-ce-debug.apk
+cd os/android
+./gradlew --no-daemon assembleDebug \
+  -PEXCLUDE_NATIVE_LIBS \
+  -PPREBUILT_NATIVE_LIBS=/path/outside/repo/private-bundle/native \
+  -PPRIVATE_GAME_ASSETS=/path/outside/repo/private-bundle/assets
+```
+
+The reused native libraries must match the intended engine revision; rebuild them when changing native code. Configure and retain a local signing key through the ignored `os/android/debug-keystore.properties` file. The standard GitHub Actions build includes only the engine and checks that bundled game assets are absent. Keep the complete APK and original game data local.
+
+The prepared RPU 2.4.34 installation contains approximately 1.45 GB of game files. The complete APK and its unpacked game data together need roughly 3 GB on the device.

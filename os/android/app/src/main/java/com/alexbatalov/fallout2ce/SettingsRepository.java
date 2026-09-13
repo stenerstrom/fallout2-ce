@@ -26,7 +26,8 @@ final class SettingsRepository {
 
     boolean hasGameData() throws IOException {
         File root = gameDirectory();
-        return new File(root, "master.dat").isFile() && new File(root, "critter.dat").isFile() && new File(root, "ce.dat").isFile();
+        return !new File(root, BundledGameExtractor.IN_PROGRESS).exists()
+                && new File(root, "master.dat").isFile() && new File(root, "critter.dat").isFile() && new File(root, "ce.dat").isFile();
     }
 
     File configFile(String relative) throws IOException {

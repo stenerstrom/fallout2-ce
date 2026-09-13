@@ -94,8 +94,10 @@ android {
         applicationId 'io.github.stenerstrom.fallout2rpuce'
         minSdk 24
         targetSdk 32
-        versionCode 5
-        versionName '1.3.0-rpu.2'
+        manifestPlaceholders = [appLabel: project.hasProperty('PRIVATE_GAME_ASSETS')
+                ? 'Fallout 2 RPU CE – komplett' : '@string/app_name']
+        versionCode 6
+        versionName '1.3.0-rpu.3'
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'
@@ -145,7 +147,7 @@ android {
         debug {
             // Prevents signing keys clashes between debug and release versions
             // for painless development.
-            applicationIdSuffix '.debug'
+            applicationIdSuffix project.hasProperty('PRIVATE_GAME_ASSETS') ? '.complete' : '.debug'
         }
         release {
             minifyEnabled false
@@ -155,6 +157,17 @@ android {
             // builds, hence `findByName`.
             signingConfig signingConfigs.findByName('release')
         }
+    }
+
+    if (project.hasProperty('PRIVATE_GAME_ASSETS')) {
+        sourceSets.main.assets.srcDir file(project.property('PRIVATE_GAME_ASSETS'))
+        aaptOptions.noCompress 'dat', 'acm'
+    }
+    if (project.hasProperty('PREBUILT_NATIVE_LIBS')) {
+        if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
+            throw new GradleException('PREBUILT_NATIVE_LIBS requires EXCLUDE_NATIVE_LIBS')
+        }
+        sourceSets.main.jniLibs.srcDir file(project.property('PREBUILT_NATIVE_LIBS'))
     }
 
     // AGP 7.x cannot guarantee 16 KB ZIP alignment for uncompressed libraries.
