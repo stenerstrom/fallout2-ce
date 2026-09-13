@@ -89,7 +89,8 @@ jobs:
                           assert align >= 16384 and align & (align - 1) == 0, entry.filename
                           assert offset % 16384 == vaddr % 16384, entry.filename
                   assert load_segments > 0, entry.filename
-          assert root.find('./application').attrib[android + 'extractNativeLibs'] == 'true'
+          # AGP applies useLegacyPackaging after the merged-manifest stage.
+          # Check compression in the APK above, not an optional intermediate attribute.
           print('Verified app identity, four ABIs, compressed libraries and 16 KB ELF alignment.')
           CHECK
 
