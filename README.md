@@ -1,5 +1,7 @@
 # FOR:CE Community Engine
 
+> **RPU / Android project branch:** This fork uses FOR:CE as its engine baseline. See [the integration assessment](docs/rpu-android.md) and [Android installation instructions](docs/rpu-android-install.md). The **RPU Android** workflow builds the project's separate test app and matching `ce.dat`. Original game data and RPU are installed separately.
+
 FOR:CE is a fully working re-implementation of the classic Fallout engine, optimized for a hassle-free experience on multiple platforms, including Windows, Mac, iOS, Android, and Linux.  It provides high resolution support, quality-of-life improvements, and dozens upon dozens of bug fixes.
 
 This is a fork of the original Fallout2: CE project, which is no longer getting regular updates.

@@ -91,7 +91,7 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId 'com.alexbatalov.fallout2ce'
+        applicationId 'io.github.stenerstrom.fallout2rpuce'
         minSdk 24
         targetSdk 32
         versionCode 4

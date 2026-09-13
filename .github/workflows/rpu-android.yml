@@ -1,0 +1,111 @@
+name: RPU Android
+
+on:
+  push:
+    branches:
+      - codex/rpu-android
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rpu-android-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ce-dat:
+    uses: ./.github/workflows/reusable-build-ce-dat.yml
+    with:
+      preset: linux-x64-debug
+
+  android:
+    name: Build RPU Android package
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: ce-dat
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: gradle
+
+      - name: Cache development signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: rpu-android-debug-keystore-v1
+
+      - name: Build APK and check SDL bindings
+        working-directory: os/android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Download matching engine assets
+        uses: actions/download-artifact@v4
+        with:
+          name: ce-dat
+          path: out/dist/fallout2-rpu-ce-android
+
+      - name: Verify application and native libraries
+        run: |
+          python3 - <<'CHECK'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          import zipfile
+          manifest = Path('os/android/app/build/intermediates/merged_manifests/debug/AndroidManifest.xml')
+          root = ET.parse(manifest).getroot()
+          assert root.attrib['package'] == 'io.github.stenerstrom.fallout2rpuce.debug'
+          android = '{http://schemas.android.com/apk/res/android}'
+          activities = {a.attrib[android + 'name'] for a in root.findall('./application/activity')}
+          assert 'com.alexbatalov.fallout2ce.MainActivity' in activities
+          assert 'com.alexbatalov.fallout2ce.ImportActivity' in activities
+          with zipfile.ZipFile('os/android/app/build/outputs/apk/debug/app-debug.apk') as apk:
+              for abi in ('arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'):
+                  assert f'lib/{abi}/libfallout2-ce.so' in apk.namelist(), abi
+          print('Verified app ID, activity classes and all four native ABIs.')
+          CHECK
+
+      - name: Package for testing
+        env:
+          ENGINE_COMMIT: ${{ github.sha }}
+          ENGINE_REPOSITORY: ${{ github.repository }}
+        run: |
+          package=out/dist/fallout2-rpu-ce-android
+          cp os/android/app/build/outputs/apk/debug/app-debug.apk "$package/fallout2-rpu-ce-debug.apk"
+          cp files/fallout2.cfg "$package/EXAMPLE_fallout2.cfg"
+          cp docs/rpu-android-install.md "$package/README.md"
+          python3 - <<'INFO'
+          import json
+          import os
+          from pathlib import Path
+          info = {
+              'engine_repository': os.environ['ENGINE_REPOSITORY'],
+              'engine_commit': os.environ['ENGINE_COMMIT'],
+              'build_type': 'Debug',
+              'application_id': 'io.github.stenerstrom.fallout2rpuce.debug',
+              'rpu_bundled': False,
+              'rpu_source_reference': {
+                  'repository': 'stenerstrom/Fallout2_Restoration_Project',
+                  'commit': 'c14d687e4c401f64f7ef4ee255de95f07a91a6e5',
+              },
+          }
+          Path('out/dist/fallout2-rpu-ce-android/BUILD_INFO.json').write_text(json.dumps(info, indent=2) + '\n')
+          INFO
+          cd "$package"
+          sha256sum fallout2-rpu-ce-debug.apk ce.dat EXAMPLE_fallout2.cfg README.md BUILD_INFO.json > SHA256SUMS
+
+      - name: Upload installable test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: fallout2-rpu-ce-android-${{ github.run_number }}
+          path: out/dist/fallout2-rpu-ce-android/
+          if-no-files-found: error
+          retention-days: 30
