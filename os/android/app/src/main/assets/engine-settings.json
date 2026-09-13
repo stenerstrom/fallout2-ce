@@ -1,0 +1,760 @@
+[
+  {
+    "section": "screen",
+    "title": "Bild",
+    "fields": [
+      {
+        "type": "integer",
+        "default": "640",
+        "key": "resolution_x",
+        "label": "Bredd",
+        "min": 640.0,
+        "max": 7680.0
+      },
+      {
+        "type": "integer",
+        "default": "480",
+        "key": "resolution_y",
+        "label": "Höjd",
+        "min": 480.0,
+        "max": 4320.0
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "windowed",
+        "label": "Fönsterläge",
+        "min": 0,
+        "max": 2,
+        "choices": [
+          "Helskärm",
+          "Fönster",
+          "Kantlöst fönster"
+        ],
+        "description": "Android fyller normalt hela skärmen. Dessa motorlägen påverkar även hur pekaren hanteras."
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "mouse_lock",
+        "label": "Lås muspekaren"
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "scale",
+        "label": "Skalning",
+        "min": 1.0,
+        "max": 4.0,
+        "description": "Högre skalning gör text och knappar större och visar mindre av kartan. Minst 640 × 480 måste återstå efter skalning."
+      }
+    ]
+  },
+  {
+    "section": "ui",
+    "title": "Gränssnitt",
+    "fields": [
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "main_menu_scale_mode",
+        "label": "Skala huvudmenyn",
+        "min": 0.0,
+        "max": 2.0,
+        "choices": [
+          "Originalstorlek",
+          "Anpassa bakgrunden",
+          "Anpassa bakgrund och knappar"
+        ]
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "in_game_menu_help",
+        "label": "Hjälp i spelmenyn"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "iface_bar_mode",
+        "label": "Gränssnittet överlappar kartan"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "perks_progress_bar",
+        "label": "Förloppsrad för förmåner"
+      },
+      {
+        "type": "integer",
+        "default": "800",
+        "key": "iface_bar_width",
+        "label": "Gränssnittets bredd",
+        "min": 640.0,
+        "max": 4320.0
+      },
+      {
+        "type": "integer",
+        "default": "2",
+        "key": "iface_bar_side_art",
+        "label": "Sidografik vid gränssnittet",
+        "min": 0.0,
+        "max": 999.0
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "iface_bar_sides_ori",
+        "label": "Sidografik från skärmens kanter"
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "alternate_ammo_meter",
+        "label": "Ammunitionsmätare",
+        "min": 0.0,
+        "max": 2.0,
+        "choices": [
+          "Original",
+          "Visa skottsalvor",
+          "Visa även små magasin"
+        ]
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "splash_screen_size",
+        "label": "Startbildens storlek",
+        "min": 0.0,
+        "max": 2.0
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "death_screen_size",
+        "label": "Dödsbildens storlek",
+        "min": 0.0,
+        "max": 1.0
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "end_slide_size",
+        "label": "Slutbildernas storlek",
+        "min": 0.0,
+        "max": 1.0
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "movie_aspect_fit",
+        "label": "Anpassa filmer med rätt proportioner"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "edg_support",
+        "label": "Använd kartornas kantdata"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "ignore_scroll_limit",
+        "label": "Friare kameraförflyttning"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "ignore_map_edges",
+        "label": "Tillåt visning utanför kartkanter"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "quick_toolbar_visible",
+        "label": "Snabbverktygsrad (endast iOS)",
+        "description": "Det här motorvalet används endast på iOS och har ingen effekt i Android-bygget."
+      },
+      {
+        "type": "decimal",
+        "default": "1.0",
+        "key": "anim_speed",
+        "label": "Menyanimationernas hastighet",
+        "min": 0.1,
+        "max": 100.0
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "skip_opening_movies",
+        "label": "Hoppa över intro",
+        "min": 0.0,
+        "max": 2.0,
+        "choices": [
+          "Visa allt",
+          "Hoppa över filmer",
+          "Hoppa över filmer och startbild"
+        ]
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "display_karma_changes",
+        "label": "Visa karmaändringar"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "display_bonus_damage",
+        "label": "Visa bonusskada"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "numbers_in_dialogue",
+        "label": "Numrera dialogsvar"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "dialog_border",
+        "label": "Detaljerad dialogram"
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "auto_quick_save",
+        "label": "Antal snabbsparplatser",
+        "min": 0.0,
+        "max": 10.0
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "enable_high_resolution_stencil",
+        "label": "Kantmask för hög upplösning"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "extend_ap_bar",
+        "label": "Utökad handlingspoängsrad"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "expand_barter_window",
+        "label": "Större byteshandelsfönster"
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "inventory_columns",
+        "label": "Kolumner i inventariet",
+        "min": 1.0,
+        "max": 2.0
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "loot_weight_indicator",
+        "label": "Viktindikator",
+        "min": 0.0,
+        "max": 3.0,
+        "choices": [
+          "Av",
+          "Enkel",
+          "Detaljerad",
+          "Behållarstorlek"
+        ]
+      },
+      {
+        "type": "integer",
+        "default": "50",
+        "key": "loot_container_size_indicator_threshold",
+        "label": "Gräns för behållarindikator (%)",
+        "min": 0.0,
+        "max": 100.0
+      }
+    ]
+  },
+  {
+    "section": "preferences",
+    "title": "Spel och styrning",
+    "fields": [
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "game_difficulty",
+        "label": "Svårighetsgrad",
+        "min": 0,
+        "max": 2,
+        "choices": [
+          "Lätt",
+          "Normal",
+          "Svår"
+        ]
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "combat_difficulty",
+        "label": "Stridens svårighetsgrad",
+        "min": 0,
+        "max": 2,
+        "choices": [
+          "Lätt",
+          "Normal",
+          "Svår"
+        ]
+      },
+      {
+        "type": "integer",
+        "default": "3",
+        "key": "violence_level",
+        "label": "Våldsnivå",
+        "min": 0,
+        "max": 3,
+        "choices": [
+          "Ingen",
+          "Minimal",
+          "Normal",
+          "Maximal"
+        ]
+      },
+      {
+        "type": "integer",
+        "default": "2",
+        "key": "target_highlight",
+        "label": "Markera stridsmål",
+        "min": 0,
+        "max": 2,
+        "choices": [
+          "Av",
+          "På",
+          "Endast vid sikte"
+        ]
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "item_highlight",
+        "label": "Markera föremål"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "combat_looks",
+        "label": "Stridsmeddelanden om målet"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "combat_messages",
+        "label": "Detaljerade stridsmeddelanden"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "combat_taunts",
+        "label": "Stridsrop"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "language_filter",
+        "label": "Språkfilter"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "running",
+        "label": "Spring som standard"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "subtitles",
+        "label": "Undertexter"
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "combat_speed",
+        "label": "Stridshastighet",
+        "min": 0,
+        "max": 50
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "player_speedup",
+        "label": "Öka även spelarens stridshastighet"
+      },
+      {
+        "type": "decimal",
+        "default": "3.5",
+        "key": "text_base_delay",
+        "label": "Textfördröjning",
+        "min": 1,
+        "max": 6,
+        "description": "Inställningar för spel och ljud kan återställas från en äldre sparning. De kan även ändras i spelets Preferences-meny."
+      },
+      {
+        "type": "decimal",
+        "default": "1.399994",
+        "key": "text_line_delay",
+        "label": "Fördröjning per textrad",
+        "min": 0,
+        "max": 2
+      },
+      {
+        "type": "decimal",
+        "default": "1.0",
+        "key": "brightness",
+        "label": "Ljusstyrka",
+        "min": 1,
+        "max": 1.17999267578125
+      },
+      {
+        "type": "decimal",
+        "default": "1.0",
+        "key": "mouse_sensitivity",
+        "label": "Muskänslighet",
+        "min": 0.25,
+        "max": 2.5,
+        "description": "Gäller relativ musrörelse. Direktpekning påverkas inte."
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "running_burning_guy",
+        "label": "Brinnande figurer springer"
+      }
+    ]
+  },
+  {
+    "section": "sound",
+    "title": "Ljud",
+    "fields": [
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "initialize",
+        "label": "Aktivera ljudsystemet"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "debug",
+        "label": "Ljudfelsökning"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "debug_sfxc",
+        "label": "Felsökning av ljudcache"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "sounds",
+        "label": "Ljudeffekter"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "music",
+        "label": "Musik"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "speech",
+        "label": "Tal"
+      },
+      {
+        "type": "integer",
+        "default": "22281",
+        "key": "master_volume",
+        "label": "Huvudvolym",
+        "min": 0,
+        "max": 32767
+      },
+      {
+        "type": "integer",
+        "default": "22281",
+        "key": "music_volume",
+        "label": "Musikvolym",
+        "min": 0,
+        "max": 32767
+      },
+      {
+        "type": "integer",
+        "default": "22281",
+        "key": "sndfx_volume",
+        "label": "Ljudeffekter – volym",
+        "min": 0,
+        "max": 32767
+      },
+      {
+        "type": "integer",
+        "default": "22281",
+        "key": "speech_volume",
+        "label": "Talvolym",
+        "min": 0,
+        "max": 32767
+      },
+      {
+        "type": "integer",
+        "default": "448",
+        "key": "cache_size",
+        "label": "Ljudcache"
+      },
+      {
+        "type": "text",
+        "default": "sound\\music\\",
+        "key": "music_path1",
+        "label": "Sökväg till musik"
+      },
+      {
+        "type": "text",
+        "default": "sound\\music\\",
+        "key": "music_path2",
+        "label": "Alternativ musiksökväg"
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "gapless_music",
+        "label": "Fortsätt musiken vid kartbyte"
+      }
+    ]
+  },
+  {
+    "section": "gameplay",
+    "title": "Förmåner",
+    "fields": [
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "perk_carryover",
+        "label": "Spara oanvända förmånsval",
+        "min": 0,
+        "max": 2,
+        "choices": [
+          "Av",
+          "På",
+          "sfall-läge"
+        ]
+      }
+    ]
+  },
+  {
+    "section": "qol",
+    "title": "Bekvämlighetsval",
+    "fields": [
+      {
+        "type": "integer",
+        "default": "3",
+        "key": "use_walk_distance",
+        "label": "Gå kortare sträckor",
+        "min": 0.0,
+        "max": 100.0
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "auto_open_doors",
+        "label": "Öppna dörrar automatiskt"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "party_trade_from_menu",
+        "label": "Byt föremål via följeslagarmenyn"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "party_loot_and_barter",
+        "label": "Följeslagare i byte och plundring"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "fast_ammo_load",
+        "label": "Snabb ammunitionsladdning"
+      }
+    ]
+  },
+  {
+    "section": "system",
+    "title": "System och spelfiler",
+    "fields": [
+      {
+        "type": "text",
+        "default": "game",
+        "key": "executable",
+        "label": "Programläge"
+      },
+      {
+        "type": "text",
+        "default": "master.dat",
+        "key": "master_dat",
+        "label": "Huvudarkiv"
+      },
+      {
+        "type": "text",
+        "default": "data",
+        "key": "master_patches",
+        "label": "Datamapp"
+      },
+      {
+        "type": "text",
+        "default": "f2_res.dat",
+        "key": "f2_res_dat",
+        "label": "Arkiv för högupplöst grafik"
+      },
+      {
+        "type": "text",
+        "default": "critter.dat",
+        "key": "critter_dat",
+        "label": "Figurarkiv"
+      },
+      {
+        "type": "text",
+        "default": "data",
+        "key": "critter_patches",
+        "label": "Figurernas datamapp"
+      },
+      {
+        "type": "text",
+        "default": "english",
+        "key": "language",
+        "label": "Språk",
+        "description": "Det valda språkets spelfiler måste vara installerade."
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "scroll_lock",
+        "label": "Lås skrollning"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "interrupt_walk",
+        "label": "Tillåt avbruten förflyttning"
+      },
+      {
+        "type": "integer",
+        "default": "32",
+        "key": "art_cache_size",
+        "label": "Grafikcache (MB)",
+        "min": 32.0,
+        "max": 512.0
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "color_cycling",
+        "label": "Animerade palettfärger"
+      },
+      {
+        "type": "integer",
+        "default": "1",
+        "key": "cycle_speed_factor",
+        "label": "Palettanimationens hastighet"
+      },
+      {
+        "type": "bool",
+        "default": "1",
+        "key": "hashing",
+        "label": "Filindexering"
+      },
+      {
+        "type": "integer",
+        "default": "0",
+        "key": "splash",
+        "label": "Startbild"
+      },
+      {
+        "type": "integer",
+        "default": "20480",
+        "key": "free_space",
+        "label": "Minsta lediga diskutrymme"
+      },
+      {
+        "type": "text",
+        "default": "png",
+        "key": "screenshots_format",
+        "label": "Skärmbildsformat"
+      }
+    ]
+  },
+  {
+    "section": "debug",
+    "title": "Felsökning",
+    "fields": [
+      {
+        "type": "text",
+        "default": "environment",
+        "key": "mode",
+        "label": "Loggläge"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "show_fps",
+        "label": "Visa bildfrekvens"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "show_tile_num",
+        "label": "Visa kartrutornas nummer"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "show_script_messages",
+        "label": "Visa skriptmeddelanden"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "show_load_info",
+        "label": "Visa laddningsinformation"
+      },
+      {
+        "type": "bool",
+        "default": "0",
+        "key": "output_map_data_info",
+        "label": "Logga kartdata"
+      },
+      {
+        "type": "integer",
+        "default": "300",
+        "key": "window_width",
+        "label": "Felsökningsfönstrets bredd",
+        "min": 200.0,
+        "max": 1920.0
+      },
+      {
+        "type": "integer",
+        "default": "192",
+        "key": "window_height",
+        "label": "Felsökningsfönstrets höjd",
+        "min": 100.0,
+        "max": 1080.0
+      },
+      {
+        "type": "text",
+        "default": "",
+        "key": "console_output_path",
+        "label": "Fil för konsollogg"
+      }
+    ]
+  }
+]

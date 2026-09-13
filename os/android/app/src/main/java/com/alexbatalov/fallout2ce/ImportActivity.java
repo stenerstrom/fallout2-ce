@@ -48,16 +48,26 @@ public class ImportActivity extends Activity {
         new Thread(() -> {
             ContentResolver contentResolver = getContentResolver();
             File externalFilesDir = getExternalFilesDir(null);
-            FileUtils.copyRecursively(contentResolver, treeDocument, externalFilesDir);
-
-            startMainActivity();
-            dialog.dismiss();
-            finish();
+            boolean copied = externalFilesDir != null
+                    && FileUtils.copyRecursively(contentResolver, treeDocument, externalFilesDir);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                dialog.dismiss();
+                if (copied) {
+                    startLauncherActivity();
+                    finish();
+                } else {
+                    new android.app.AlertDialog.Builder(this)
+                            .setTitle("Importen misslyckades")
+                            .setMessage("Alla spelfiler kunde inte kopieras. Kontrollera mappen och ledigt utrymme, och försök igen.")
+                            .setPositiveButton("Tillbaka", (prompt, which) -> finish()).show();
+                }
+            });
         }).start();
     }
 
-    private void startMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
+    private void startLauncherActivity() {
+        Intent intent = new Intent(this, LauncherActivity.class);
         startActivity(intent);
     }
 

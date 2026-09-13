@@ -21,9 +21,7 @@ public class FileUtils {
                 }
             } else if (documentFile.isDirectory()) {
                 final File subdirectory = new File(dest, documentFile.getName());
-                if (!subdirectory.exists()) {
-                    subdirectory.mkdir();
-                }
+                if (!subdirectory.isDirectory() && !subdirectory.mkdirs()) return false;
 
                 if (!copyRecursively(contentResolver, documentFile, subdirectory)) {
                     return false;
@@ -34,18 +32,16 @@ public class FileUtils {
     }
 
     private static boolean copyFile(ContentResolver contentResolver, DocumentFile src, File dest) {
-        try {
-            final InputStream inputStream = contentResolver.openInputStream(src.getUri());
-            final OutputStream outputStream = new FileOutputStream(dest);
+        try (InputStream inputStream = contentResolver.openInputStream(src.getUri())) {
+            if (inputStream == null) return false;
+            try (OutputStream outputStream = new FileOutputStream(dest)) {
 
-            final byte[] buffer = new byte[16384];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+                final byte[] buffer = new byte[16384];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
             }
-
-            inputStream.close();
-            outputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
             return false;

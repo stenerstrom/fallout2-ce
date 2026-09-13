@@ -38,6 +38,11 @@ jobs:
           java-version: 11
           cache: gradle
 
+      - name: Check settings coverage and persistence
+        run: |
+          python3 os/android/tools/generate_settings_schema.py --check
+          bash os/android/tools/test-settings.sh
+
       - name: Cache development signing key
         uses: actions/cache@v4
         with:
@@ -61,6 +66,7 @@ jobs:
           import xml.etree.ElementTree as ET
           import zipfile
           import struct
+          import json
           manifest = Path('os/android/app/build/intermediates/merged_manifests/debug/AndroidManifest.xml')
           root = ET.parse(manifest).getroot()
           assert root.attrib['package'] == 'io.github.stenerstrom.fallout2rpuce.debug'
@@ -68,7 +74,15 @@ jobs:
           activities = {a.attrib[android + 'name'] for a in root.findall('./application/activity')}
           assert 'com.alexbatalov.fallout2ce.MainActivity' in activities
           assert 'com.alexbatalov.fallout2ce.ImportActivity' in activities
+          for name in ('LauncherActivity', 'SettingsActivity', 'SettingsEditorActivity'):
+              assert 'com.alexbatalov.fallout2ce.' + name in activities
+          launcher = root.find("./application/activity[@"+android+"name='com.alexbatalov.fallout2ce.LauncherActivity']")
+          assert launcher.find("./intent-filter/category[@"+android+"name='android.intent.category.LAUNCHER']") is not None
+          game = root.find("./application/activity[@"+android+"name='com.alexbatalov.fallout2ce.MainActivity']")
+          assert game.attrib[android + 'process'].endswith(':game')
           with zipfile.ZipFile('os/android/app/build/outputs/apk/debug/app-debug.apk') as apk:
+              schema = json.loads(apk.read('assets/engine-settings.json'))
+              assert sum(len(section['fields']) for section in schema) == 97
               for abi in ('arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'):
                   assert f'lib/{abi}/libfallout2-ce.so' in apk.namelist(), abi
               for entry in apk.infolist():
