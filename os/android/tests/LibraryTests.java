@@ -12,6 +12,12 @@ public class LibraryTests {
  static ManagedGameInstaller.Entry entry(String path,String text,boolean seed,String... old)throws Exception{return new ManagedGameInstaller.Entry(new BundledGameExtractor.Entry(path,text.length(),hash(text)),seed,Arrays.asList(old));}
  static void write(File r,String path,String text)throws Exception{File f=new File(r,path);f.getParentFile().mkdirs();Files.write(f.toPath(),text.getBytes("UTF-8"));}
  static String read(File r,String path)throws Exception{return new String(Files.readAllBytes(new File(r,path).toPath()),"UTF-8");}
+ // Model a device with only the reserved margin left after staging completed.
+ static final class LimitedSpace extends File {
+  LimitedSpace(File file){super(file.getPath());}
+  @Override public File getCanonicalFile()throws IOException{return new LimitedSpace(new File(getCanonicalPath()));}
+  @Override public long getUsableSpace(){return 64L*1024*1024;}
+ }
  public static void main(String[]args)throws Exception{
   File root=Files.createTempDirectory("library-tests").toFile().getCanonicalFile();
   BundledGameExtractor.Progress quiet=(done,total)->{if(done>total)throw new AssertionError("Progress");};
@@ -43,6 +49,18 @@ public class LibraryTests {
    File sonora=GameProfile.SONORA.directory(root);
    rejects(()->ManagedGameInstaller.install(sonora,hash("sonora1"),nfiles,path->new ByteArrayInputStream("bad".getBytes("UTF-8")),quiet));
    check(!new File(sonora,"master.dat").exists());
+   File resumed=new File(root,"resumed");resumed.mkdirs();
+   String staged="already downloaded";
+   write(resumed,".content-update/files/master.dat",staged);
+   List<ManagedGameInstaller.Entry> resumedFiles=Collections.singletonList(entry("master.dat",staged,false));
+   ManagedGameInstaller.install(new LimitedSpace(resumed),hash("resumed"),resumedFiles,
+     path->{throw new AssertionError("Verified staged bytes must be reused");},quiet);
+   check(read(resumed,"master.dat").equals(staged));check(ManagedGameInstaller.current(resumed,hash("resumed")));
+   File damaged=new File(root,"damaged-stage");damaged.mkdirs();
+   write(damaged,".content-update/files/master.dat","corrupt");
+   rejects(()->ManagedGameInstaller.install(new LimitedSpace(damaged),hash("damaged"),resumedFiles,
+     path->{throw new AssertionError("Not enough room to replace corrupt staged bytes");},quiet));
+   check(!new File(damaged,"master.dat").exists());
    for(String path:new String[]{"../escape","mods/../../escape","/absolute","mods\\escape","mods/./file","x\nmaster.dat","x\tmaster.dat"})rejects(()->ManagedGameInstaller.target(root,path));
    File link=new File(root,"games/redirect");Files.createSymbolicLink(link.toPath(),root.getParentFile().toPath());rejects(()->ManagedGameInstaller.target(root,"games/redirect/outside"));
    check(read(root,"data/savegame/slot01/save.dat").equals("my save"));

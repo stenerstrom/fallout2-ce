@@ -54,7 +54,12 @@ final class ManagedGameInstaller {
                     throw new IOException("This game file was changed outside the app: "+entry.file.path
                             +". Keep your changes or restore the original file before updating.");
             }
-            changed.add(entry); needed=Math.addExact(needed,entry.file.size);
+            changed.add(entry);
+            // A verified file left by an interrupted attempt already occupies
+            // its storage. Count only files that still need to be written.
+            File stage=target(new File(work,"files"),entry.file.path);
+            if(!stage.isFile()||stage.length()!=entry.file.size||!hash(stage).equals(entry.file.sha256))
+                needed=Math.addExact(needed,entry.file.size);
         }
         if(root.getUsableSpace()<needed+64L*1024*1024)throw new IOException("More free space is needed to prepare this game.");
         progress.update(done,total);

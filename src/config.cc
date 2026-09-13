@@ -392,20 +392,21 @@ static bool configWriteDb(Config* config, const char* filePath)
         return false;
     }
 
+    bool success = true;
     for (int i = 0; i < config->entriesLength; i++) {
         DictionaryEntry* sectionEntry = &(config->entries[i]);
-        filePrintFormatted(stream, "[%s]\n", sectionEntry->key);
+        if (filePrintFormatted(stream, "[%s]\n", sectionEntry->key) < 0) success = false;
 
         ConfigSection* section = (ConfigSection*)sectionEntry->value;
         for (int j = 0; j < section->entriesLength; j++) {
             DictionaryEntry* keyValueEntry = &(section->entries[j]);
-            filePrintFormatted(stream, "%s=%s\n", keyValueEntry->key, *(char**)keyValueEntry->value);
+            if (filePrintFormatted(stream, "%s=%s\n", keyValueEntry->key, *(char**)keyValueEntry->value) < 0) success = false;
         }
-        filePrintFormatted(stream, "\n");
+        if (filePrintFormatted(stream, "\n") < 0) success = false;
     }
 
-    fileClose(stream);
-    return true;
+    if (fileClose(stream) != 0) success = false;
+    return success;
 }
 
 static bool configWriteStandard(Config* config, const char* filePath)
@@ -420,8 +421,9 @@ static bool configWriteStandard(Config* config, const char* filePath)
         fprintf(stream, "\n");
     }
 
-    fclose(stream);
-    return true;
+    bool success = ferror(stream) == 0;
+    if (fclose(stream) != 0) success = false;
+    return success;
 }
 
 static void configWriteSection(FILE* stream, const char* sectionName, ConfigSection* section, const StringSet* handledKeys)
@@ -612,8 +614,15 @@ static bool configWriteSideBySide(Config* config, const char* filePath, int flag
         }
     }
 
-    fclose(output);
-    fclose(original);
+    // Buffered output may fail only at fclose (for example on a full device).
+    // Do not replace either the original or its backup unless all I/O succeeded.
+    bool success = ferror(output) == 0 && ferror(original) == 0;
+    if (fclose(output) != 0) success = false;
+    if (fclose(original) != 0) success = false;
+    if (!success) {
+        compat_remove(tempPath);
+        return false;
+    }
 
     std::string backupPath = std::string(filePath) + ".bak";
 

@@ -6,6 +6,7 @@
 
 #include "art.h"
 #include "db.h"
+#include "sfall_config.h"
 
 namespace fallout {
 
@@ -184,7 +185,12 @@ void sfallFileSystemWriteString(int id, const char* value, bool terminate)
 
 std::shared_ptr<const std::vector<unsigned char>> sfallFileSystemData(const char* path, bool engineLookup)
 {
-    if (engineLookup && normalizePath(path).rfind("sound\\sfx\\", 0) == 0) return nullptr;
+    if (engineLookup) {
+        int enabled = 1;
+        if (gSfallConfigInitialized)
+            configGetInt(&gSfallConfig, SFALL_CONFIG_MISC_KEY, "UseFileSystemOverride", &enabled);
+        if (enabled == 0 || normalizePath(path).rfind("sound\\sfx\\", 0) == 0) return nullptr;
+    }
     auto file = get(sfallFileSystemFind(path));
     return file ? file->data : nullptr;
 }

@@ -23,3 +23,9 @@ c++ -std=c++17 -Wall -Wextra -Werror \
   "$android_dir/tests/global_vars_test.cc" "$android_dir/../../src/sfall_global_vars.cc" \
   -o "$output/global-vars-test"
 "$output/global-vars-test"
+
+# dictionary.cc retains legacy signed marker comparisons.
+c++ -std=c++17 -Wall -Wextra -Werror -Wno-sign-compare \
+  "$android_dir/tests/config_io_test.cc" "$android_dir/../../src/config.cc" \
+  "$android_dir/../../src/dictionary.cc" -o "$output/config-io-test"
+"$output/config-io-test"

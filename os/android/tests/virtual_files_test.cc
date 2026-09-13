@@ -1,5 +1,6 @@
 #include "../../../src/sfall_filesystem.h"
 #include "../../../src/db.h"
+#include "../../../src/sfall_config.h"
 
 #include <cassert>
 #include <climits>
@@ -8,11 +9,21 @@
 #include <map>
 #include <string>
 
-// Only the archive and cache dependencies are substituted. All VFS operations
+// Only archive, cache and configuration dependencies are substituted. All VFS operations
 // and the memory stream used by xfile are the production implementations.
 namespace fallout {
 static std::map<std::string, std::vector<unsigned char>> archive;
 static int cacheFlushes = 0;
+bool gSfallConfigInitialized = true;
+Config gSfallConfig;
+static int overrideSetting = 1;
+bool configGetInt(Config*, const char* section, const char* key, int* value)
+{
+    assert(std::strcmp(section, "Misc") == 0);
+    assert(std::strcmp(key, "UseFileSystemOverride") == 0);
+    *value = overrideSetting;
+    return true;
+}
 int artCacheFlush() { return ++cacheFlushes; }
 File* fileOpen(const char* path, const char*)
 {
@@ -98,6 +109,18 @@ int main()
     sfallFileSystemWriteInteger(frm, 50, 2);
     reader->memory->seek(4, SEEK_SET);
     assert(reader->memory->get() == 0 && reader->memory->get() == 16);
+    // Disabling engine overrides keeps script files and existing readers alive.
+    overrideSetting = 0;
+    assert(!sfallFileSystemData("art/test.frm", true));
+    assert(sfallFileSystemData("art/test.frm"));
+    File* original = fileOpen("art\\critters\\walk.frm", "rb");
+    assert(fileRead(bytes, 1, sizeof(bytes), original) == 12 && bytes[5] == 8);
+    fileClose(original);
+    assert(sfallFileSystemFind("art/test.frm") == id);
+    reader->memory->seek(4, SEEK_SET);
+    assert(reader->memory->get() == 0 && reader->memory->get() == 16);
+    overrideSetting = 1;
+    assert(sfallFileSystemData("art/test.frm", true));
     int copied = sfallFileSystemCopy("copied", "art\\critters\\walk.frm");
     assert(sfallFileSystemData("copied")->at(5) == 50);
     sfallFileSystemDelete(frm);
