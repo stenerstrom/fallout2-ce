@@ -1,6 +1,6 @@
 # Wasteland Collection — RPU feature test build
 
-Version: **1.4.0-alpha.2**, Android version code **10**.
+Version: **1.4.0-alpha.3**, Android version code **11**.
 
 This milestone retains the English three-game library and adds the RPU features described below. Campaign verification and some compatibility work remain.
 
@@ -23,7 +23,7 @@ The private application ID remains io.github.stenerstrom.fallout2rpuce.complete.
 - Content updates stage and verify all changed managed files before activation, record a recovery journal and roll forward after interruption. Existing configuration files are seeds and are preserved. Unknown modifications to managed files stop the update instead of being overwritten.
 
 - Save export/restore is available for each profile under Settings. Restore validates the archive before replacing saves, keeps the previous save folder, and recovers interrupted activation. Previous saves can be exported again from that screen.
-- RPU named fake perks/traits now render and persist; mutable virtual files support the original walking/Goris scripts. Hero Appearance uses player-specific archives, with an English menu in Quick commands and saved appearance choices.
+- RPU named fake perks/traits now render and persist; mutable virtual files support the original walking/Goris scripts. Hero Appearance uses player-specific archives, with an English menu in Quick commands and saved appearance choices. Character creation now includes a rotating preview, MODEL/STYLE selectors and arrows, with appearance retained in GCD character templates.
 - RPU options expose walking, Goris speed, Hero Appearance, virtual file support, merchant restocking, alternative explosion artwork, and Default/Glovz/YAAM ammo rules. Ammo choices update the loader and engine together.
 
 Configuration merging, obsolete-file removal and user-triggered content rollback remain future work. A successful installation record avoids extracting the game every launch; it is not a complete on-launch integrity scan.
@@ -52,7 +52,7 @@ python3 os/android/tools/prepare_collection_bundle.py \
 
 The output directory must be new and outside the repository and input folders. Manifests live in assets/bundled-games/<profile>/manifest.json; content is stored at assets/bundled-pool/<sha256>. BUNDLE_INFO.json records manifest hashes. The alpha.1 baseline contained 226 logical files in 198 pool entries; the private build report records current counts and hashes.
 
-Native source changes in alpha.2. Build all four ABIs in CI and download both libraries and ce.dat from that exact commit before packaging locally. Do not reuse alpha.1 engine libraries. Use JDK 11 and these options (AGP 7.2 needs extra memory for the large archives):
+Native source changes in alpha.3. Build all four ABIs in CI and download both libraries and ce.dat from that exact commit before packaging locally. Do not reuse libraries from earlier alpha builds. Use JDK 11 and these options (AGP 7.2 needs extra memory for the large archives):
 
 ~~~sh
 ./gradlew --no-daemon --max-workers=1 \
@@ -63,13 +63,13 @@ Native source changes in alpha.2. Build all four ABIs in CI and download both li
 
 ## Validation and limits
 
-Automated checks cover 97 settings, 36 settings/lock assertions, 25 legacy extraction assertions, 32 profile/update/recovery checks, 28 HUD command assertions, all 256 key mappings, and game-clock continuity/speed. Alpha.2 additionally covers fake-perk persistence/corruption, virtual-file mutation and engine streams, global-state replacement, and 48 save archive assertions. See [the focused test protocol](rpu-alpha2-tests.md).
+Automated checks cover 97 settings, 36 settings/lock assertions, 25 legacy extraction assertions, 32 profile/update/recovery checks, 28 HUD command assertions, all 256 key mappings, and game-clock continuity/speed. Alpha.2 additionally covers fake-perk persistence/corruption, virtual-file mutation and engine streams, global-state replacement, and 48 save archive assertions. See [the alpha.2 test record](rpu-alpha2-tests.md) and [the creation-panel checks](rpu-alpha3-tests.md).
 
 Isolated Mac CE tests reached the English main menu, character selection and opening map for both Sonora and Nevada, then saved and reloaded successfully. Their scratch saves are excluded from the APK. Sonora's opening test had no script errors in its log. Nevada's opening scene emitted null-object script errors from VbCCmndr.int and Animfrvr.int; the game continued and saved/loaded, but progression past the opening needs a dedicated compatibility test. These results do not certify the complete campaigns.
 
-The new Android library has not yet been installed or visually tested on the Honor tablet. The user installs the APK. The first device test should verify:
+The alpha.3 character-creation change has not yet been tested on the Honor tablet. The user installs the APK. The first device test should verify:
 
-1. Install as an update, open Fallout 2, confirm an existing RPU save still loads.
+1. Install as an update, open Fallout 2, confirm an existing RPU save still loads. Start New Game → Create Character and test MODEL/STYLE, their arrows, sex changes, Cancel, and saving/loading a character template.
 2. Return through the game menu, prepare Sonora, start a new game, save and reload.
 3. Repeat for Nevada, including the opening conversation and exit from Vault 8.
 4. Give each game a different resolution, switch between them and confirm settings/save isolation. Check touch targets, HUD movement and speed controls.

@@ -15,6 +15,7 @@ void heroAppearanceLoad();
 void heroAppearanceSyncGender();
 bool heroAppearanceSetRace(int race);
 bool heroAppearanceSetStyle(int style);
+bool heroAppearanceCycle(bool style, int direction);
 File* heroAppearanceOpen(const char* path, const char* mode);
 int heroAppearanceFid(int fid);
 int heroAppearanceBaseFid(int fid);

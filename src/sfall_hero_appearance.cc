@@ -68,6 +68,8 @@ void redraw()
 {
     if (!gDude) return;
     gDude->fid = heroAppearanceFid(gDude->fid);
+    // Character creation has no loaded map to refresh.
+    if (!gGameLoaded) return;
     Rect rect;
     objectGetRect(gDude, &rect);
     tileWindowRefreshRect(&rect, gDude->elevation);
@@ -204,6 +206,21 @@ bool heroAppearanceSetStyle(int style)
     heroAppearanceSyncGender();
     if (heroAppearanceEnabled() && style == currentStyle) return true;
     return select(currentRace, style, true);
+}
+
+bool heroAppearanceCycle(bool style, int direction)
+{
+    if (!heroAppearanceEnabled() || direction == 0) return false;
+    heroAppearanceSyncGender();
+    int current = style ? currentStyle : currentRace;
+    for (int step = 1; step < 100; step++) {
+        int candidate = (current + (direction > 0 ? step : -step) + 100) % 100;
+        if (candidate == 0 || openArchive(style ? currentRace : candidate,
+                style ? candidate : 0, gender())) {
+            return style ? heroAppearanceSetStyle(candidate) : heroAppearanceSetRace(candidate);
+        }
+    }
+    return false;
 }
 
 static std::string choiceLabel(AppearanceArchive& source, bool style, int index)

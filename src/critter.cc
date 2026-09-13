@@ -30,6 +30,7 @@
 #include "reaction.h"
 #include "scripts.h"
 #include "sfall_object_name.h"
+#include "sfall_hero_appearance.h"
 #include "sfall_script_hooks.h"
 #include "skill.h"
 #include "stat.h"
@@ -1106,6 +1107,20 @@ int gcdLoad(const char* path)
     proto->critter.data.experience = 0;
     proto->critter.data.killType = KILL_TYPE_MAN;
 
+    if (heroAppearanceEnabled()) {
+        // sfall appends two big-endian integers to GCD character templates.
+        // Legacy files have no extension; incomplete/invalid fields use defaults.
+        int race = 0, style = 0, value;
+        if (fileReadInt32(stream, &value) == 0 && value >= 0 && value < 100) {
+            race = value;
+            if (fileReadInt32(stream, &value) == 0 && value >= 0 && value < 100) style = value;
+        }
+        heroAppearanceSetRace(0);
+        heroAppearanceSetStyle(0);
+        if (heroAppearanceSetRace(race)) heroAppearanceSetStyle(style);
+        _proto_dude_update_gender();
+    }
+
     fileClose(stream);
     return 0;
 }
@@ -1173,8 +1188,14 @@ int gcdSave(const char* path)
         return -1;
     }
 
-    fileClose(stream);
-    return 0;
+    if (heroAppearanceEnabled()
+        && (fileWriteInt32(stream, heroAppearanceRace()) == -1
+            || fileWriteInt32(stream, heroAppearanceStyle()) == -1)) {
+        fileClose(stream);
+        return -1;
+    }
+
+    return fileClose(stream) == 0 ? 0 : -1;
 }
 
 // 0x42E174 critter_write_data

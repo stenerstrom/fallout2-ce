@@ -734,7 +734,7 @@ int showLoadFileDialog(char* title, char** fileList, char* dest, int fileListLen
 
         convertMouseWheelToArrowKey(&keyCode);
 
-        if (keyCode == 500) {
+        if (keyCode == 500 || keyCode == KEY_RETURN) {
             if (fileListLength != 0) {
                 strncpy(dest, fileList[selectedFileIndex + pageOffset], 16);
                 rc = 0;
@@ -791,14 +791,9 @@ int showLoadFileDialog(char* title, char** fileList, char* dest, int fileListLen
             case KEY_ARROW_DOWN:
                 if (isScrollable) {
                     pageOffset++;
-                    // FIXME: Should be >= maxPageOffset (as in save dialog).
-                    // Otherwise out of bounds index is considered selected.
-                    if (pageOffset > maxPageOffset) {
+                    if (pageOffset >= maxPageOffset) {
                         selectedFileIndex++;
-                        // FIXME: Should be >= FILE_DIALOG_LINE_COUNT (as in
-                        // save dialog). Otherwise out of bounds index is
-                        // considered selected.
-                        if (selectedFileIndex > FILE_DIALOG_LINE_COUNT) {
+                        if (selectedFileIndex >= FILE_DIALOG_LINE_COUNT) {
                             selectedFileIndex = FILE_DIALOG_LINE_COUNT - 1;
                         }
                         pageOffset = maxPageOffset;

@@ -2205,6 +2205,10 @@ int _ResetPlayer()
     perksReset();
     traitsReset();
     critterUpdateDerivedStats(gDude);
+    if (heroAppearanceEnabled()) {
+        heroAppearanceSetRace(0);
+        heroAppearanceSetStyle(0);
+    }
     return 0;
 }
 

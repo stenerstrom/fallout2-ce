@@ -36,6 +36,7 @@
 #include "palette.h"
 #include "perk.h"
 #include "sfall_fake_perks.h"
+#include "sfall_hero_appearance.h"
 #include "platform_compat.h"
 #include "proto.h"
 #include "scripts.h"
@@ -855,6 +856,144 @@ struct CustomKarmaFolderDescription {
 static std::vector<CustomKarmaFolderDescription> gCustomKarmaFolderDescriptions;
 static std::vector<TownReputationEntry> gCustomTownReputationEntries;
 
+// Keep the original 640x480 editor usable at every supported resolution.
+// The appearance column occupies the left part of the original skill panel.
+static bool gCharacterEditorHasAppearance;
+static std::vector<unsigned char> gCharacterEditorAppearanceBackground;
+static unsigned int gCharacterEditorAppearanceTick;
+static Rotation gCharacterEditorAppearanceRotation = ROTATION_SE;
+
+static int characterEditorAppearanceShift(int pixels)
+{
+    return gCharacterEditorHasAppearance ? pixels : 0;
+}
+
+static void characterEditorPrepareAppearance()
+{
+    if (!gCharacterEditorHasAppearance) return;
+    const unsigned char* original = _editorBackgroundFrmImage.getData();
+    gCharacterEditorAppearanceBackground.assign(original, original + 640 * 480);
+    auto* background = gCharacterEditorAppearanceBackground.data();
+    auto copy = [&](int sx, int sy, int width, int height, int dx, int dy) {
+        blitBufferToBuffer(original + sy * 640 + sx, width, height, 640,
+            background + dy * 640 + dx, 640);
+    };
+    // Move the tag counter and the skill-button rail; the information card stays.
+    copy(519, 228, 38, 26, 555, 228);
+    copy(460, 228, 38, 26, 519, 228);
+    copy(332, 0, 36, 258, 408, 0);
+    FrmImage frame;
+    if (frame.lock(InterfaceFrmId(static_cast<InterfaceFrameId>(113)))) {
+        auto region = [&](int sx, int sy, int width, int height, int dx, int dy) {
+            blitBuffer2D({frame.getData(), frame.getWidth(), frame.getHeight()},
+                sx, sy, width, height, {background, 640, 480}, dx, dy);
+        };
+        region(163, 20, 81, 132, 331, 63);
+        region(154, 228, 79, 31, 332, 32);
+        region(158, 236, 79, 30, 332, 195);
+    }
+    bufferFill(background + 60 * 640 + 335, 74, 136, 640, COLOR_BLACK);
+    bufferDrawRectShadowed(background, 640, 333, 59, 410, 196, COLOR_DARK_GREY, COLOR_BLACK);
+    // Restore the column's metal title bars from the original background.
+    copy(332, 0, 82, 32, 332, 0);
+    copy(396, 226, 82, 32, 332, 226);
+    int oldFont = fontGetCurrent();
+    fontSetCurrent(103);
+    for (auto title : {std::pair<const char*, int>{"MODEL", 7}, {"STYLE", 233}}) {
+        int width = fontGetStringWidth(title.first);
+        fontDrawText(background + title.second * 640 + 332 + (82 - width) / 2,
+            title.first, 82, 640, COLOR_DARK_YELLOW);
+    }
+    fontSetCurrent(oldFont);
+    // Reuse Fallout's left/right artwork, with larger invisible touch regions.
+    for (int row : {36, 200}) {
+        for (int side = 0; side < 2; side++) {
+            FrmImage arrow;
+            if (arrow.lock(InterfaceFrmId(static_cast<InterfaceFrameId>(side ? 124 : 122)))) {
+                blitBuffer2D({arrow.getData(), arrow.getWidth(), arrow.getHeight()},
+                    {background, 640, 480}, 343 + side * 35, row);
+            }
+        }
+    }
+    memcpy(gCharacterEditorWindowBuffer, background, 640 * 480);
+    gCharacterEditorAppearanceTick = getTicks();
+    gCharacterEditorAppearanceRotation = ROTATION_SE;
+}
+
+static void characterEditorDrawAppearance(bool force)
+{
+    if (!gCharacterEditorHasAppearance || gCharacterEditorAppearanceBackground.empty()) return;
+    if (!force && getTicksSince(gCharacterEditorAppearanceTick) < 650) return;
+    if (!force) gCharacterEditorAppearanceRotation =
+        static_cast<Rotation>((gCharacterEditorAppearanceRotation + 1) % ROTATION_COUNT);
+    gCharacterEditorAppearanceTick = getTicks();
+    blitBufferToBuffer(gCharacterEditorAppearanceBackground.data() + 60 * 640 + 335,
+        74, 136, 640, gCharacterEditorWindowBuffer + 60 * 640 + 335, 640);
+    FrmImage body;
+    FrmId fid(heroAppearanceFid(CritterFrmId(_art_vault_guy_num).fid()));
+    if (body.lock(fid, 0, gCharacterEditorAppearanceRotation)) {
+        int width = body.getWidth(), height = body.getHeight();
+        // Enlarge small sprites while keeping even large models inside the view.
+        if (width > 0 && height > 0) {
+            double scale = std::min({2.0, 70.0 / width, 128.0 / height});
+            int drawWidth = std::max(1, static_cast<int>(width * scale));
+            int drawHeight = std::max(1, static_cast<int>(height * scale));
+            blitBuffer2DScaledTrans({body.getData(), width, height},
+                {gCharacterEditorWindowBuffer, 640, 480},
+                337 + (70 - drawWidth) / 2, 64 + (128 - drawHeight) / 2, drawWidth, drawHeight);
+        }
+    }
+    Rect rect {335, 60, 408, 195};
+    windowRefreshRect(gCharacterEditorWindow, &rect);
+}
+
+static void characterEditorRegisterAppearance()
+{
+    if (!gCharacterEditorHasAppearance) return;
+    auto button = [&](int x, int y, int width, int height, int event) {
+        int id = buttonCreate(gCharacterEditorWindow, x, y, width, height,
+            -1, -1, -1, event);
+        if (id != -1) buttonSetCallbacks(id, _gsound_red_butt_press, _gsound_red_butt_release);
+    };
+    button(332, 0, 82, 32, 18000);
+    button(332, 226, 82, 32, 18001);
+    button(332, 32, 41, 28, 18002);
+    button(373, 32, 41, 28, 18003);
+    button(332, 197, 41, 29, 18004);
+    button(373, 197, 41, 29, 18005);
+    button(334, 60, 76, 136, 18006);
+    characterEditorDrawAppearance(true);
+}
+
+static bool characterEditorHandleAppearance(int keyCode)
+{
+    if (!gCharacterEditorHasAppearance) return false;
+    switch (keyCode) {
+    case KEY_UPPERCASE_R:
+    case KEY_LOWERCASE_R:
+    case 18000:
+        heroAppearanceSelect(0);
+        break;
+    case KEY_UPPERCASE_H:
+    case KEY_LOWERCASE_H:
+    case 18001:
+        heroAppearanceSelect(1);
+        break;
+    case 18002: heroAppearanceCycle(false, -1); break;
+    case 18003: heroAppearanceCycle(false, 1); break;
+    case 18004: heroAppearanceCycle(true, -1); break;
+    case 18005: heroAppearanceCycle(true, 1); break;
+    case 18006:
+        gCharacterEditorAppearanceRotation =
+            static_cast<Rotation>((gCharacterEditorAppearanceRotation + 1) % ROTATION_COUNT);
+        break;
+    default: return false;
+    }
+    characterEditorDrawAppearance(true);
+    windowRefresh(gCharacterEditorWindow);
+    return true;
+}
+
 // 0x431DF8 editor_design
 int characterEditorShow(bool isCreationMode)
 {
@@ -866,6 +1005,11 @@ int characterEditorShow(bool isCreationMode)
     const char* lines[] = { line2 };
 
     gCharacterEditorIsCreationMode = isCreationMode;
+    gCharacterEditorHasAppearance = isCreationMode && heroAppearanceEnabled();
+    gCharacterEditorAppearanceBackground.clear();
+    int savedRace = heroAppearanceRace();
+    int savedStyle = heroAppearanceStyle();
+    if (gCharacterEditorHasAppearance) _proto_dude_update_gender();
     tagSkill4LevelBase = -1;
 
     characterEditorSavePlayer();
@@ -896,6 +1040,7 @@ int characterEditorShow(bool isCreationMode)
         int keyCode = inputGetInput();
 
         convertMouseWheelToArrowKey(&keyCode);
+        if (characterEditorHandleAppearance(keyCode)) keyCode = -1;
 
         bool done = false;
         if (keyCode == 500) {
@@ -999,6 +1144,10 @@ int characterEditorShow(bool isCreationMode)
             windowRefresh(gCharacterEditorWindow);
         } else if (gCharacterEditorIsCreationMode && (keyCode == 520 || keyCode == KEY_UPPERCASE_S || keyCode == KEY_LOWERCASE_S)) {
             characterEditorEditGender();
+            if (gCharacterEditorHasAppearance) {
+                _proto_dude_update_gender();
+                characterEditorDrawAppearance(true);
+            }
             windowRefresh(gCharacterEditorWindow);
         } else if (gCharacterEditorIsCreationMode && (keyCode >= 503 && keyCode < (503 + (PRIMARY_STAT_COUNT * 2)))) {
             // mouse button down on +/- buttons for primary stats
@@ -1008,6 +1157,10 @@ int characterEditorShow(bool isCreationMode)
         } else if ((gCharacterEditorIsCreationMode && (keyCode == 501 || keyCode == KEY_UPPERCASE_O || keyCode == KEY_LOWERCASE_O))
             || (!gCharacterEditorIsCreationMode && (keyCode == 501 || keyCode == KEY_UPPERCASE_P || keyCode == KEY_LOWERCASE_P))) {
             characterEditorShowOptions();
+            if (gCharacterEditorHasAppearance) {
+                _proto_dude_update_gender();
+                characterEditorDrawAppearance(true);
+            }
             windowRefresh(gCharacterEditorWindow);
         } else if (keyCode >= 525 && keyCode < 535) {
             characterEditorHandleInfoButtonPressed(keyCode);
@@ -1244,6 +1397,7 @@ int characterEditorShow(bool isCreationMode)
             }
         }
 
+        characterEditorDrawAppearance(false);
         renderPresent();
         sharedFpsLimiter.throttle();
     }
@@ -1259,6 +1413,11 @@ int characterEditorShow(bool isCreationMode)
 
     if (rc == 1) {
         characterEditorRestorePlayer();
+        if (gCharacterEditorHasAppearance) {
+            heroAppearanceSetRace(savedRace);
+            heroAppearanceSetStyle(savedStyle);
+            _proto_dude_update_gender();
+        }
     }
 
     if (dudeHasState(DUDE_STATE_LEVEL_UP_AVAILABLE)) {
@@ -1464,6 +1623,7 @@ static int characterEditorWindowInit()
 
     gCharacterEditorWindowBuffer = windowGetBuffer(gCharacterEditorWindow);
     memcpy(gCharacterEditorWindowBuffer, _editorBackgroundFrmImage.getData(), 640 * 480);
+    characterEditorPrepareAppearance();
 
     if (gCharacterEditorIsCreationMode) {
         fontSetCurrent(103);
@@ -1480,12 +1640,12 @@ static int characterEditorWindowInit()
         // OPTIONAL TRAITS
         str = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 139);
         fontDrawText(gCharacterEditorWindowBuffer + (326 * 640) + 52, str, 640, 640, COLOR_DARK_YELLOW);
-        characterEditorDrawBigNumber(522, 228, 0, gPerkDialogOptionCount, 0, gCharacterEditorWindow);
+        characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, 0, gPerkDialogOptionCount, 0, gCharacterEditorWindow);
 
         // TAG SKILLS
         str = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 138);
-        fontDrawText(gCharacterEditorWindowBuffer + (233 * 640) + 422, str, 640, 640, COLOR_DARK_YELLOW);
-        characterEditorDrawBigNumber(522, 228, 0, gCharacterEditorTaggedSkillCount, 0, gCharacterEditorWindow);
+        fontDrawText(gCharacterEditorWindowBuffer + (233 * 640) + 422 + characterEditorAppearanceShift(36), str, 640, 640, COLOR_DARK_YELLOW);
+        characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, 0, gCharacterEditorTaggedSkillCount, 0, gCharacterEditorWindow);
     } else {
         fontSetCurrent(103);
 
@@ -1698,7 +1858,7 @@ static int characterEditorWindowInit()
         for (i = 0; i < SKILL_COUNT; i++) {
             gCharacterEditorTagSkillBtns[i] = buttonCreate(
                 gCharacterEditorWindow,
-                TAG_SKILLS_BUTTON_X,
+                TAG_SKILLS_BUTTON_X + characterEditorAppearanceShift(76),
                 y,
                 _editorFrmImages[EDITOR_GRAPHIC_TAG_SKILL_BUTTON_ON].getWidth(),
                 _editorFrmImages[EDITOR_GRAPHIC_TAG_SKILL_BUTTON_ON].getHeight(),
@@ -1844,6 +2004,7 @@ static int characterEditorWindowInit()
     }
 
     characterEditorRegisterInfoAreas();
+    characterEditorRegisterAppearance();
     soundContinueAll();
 
     btn = buttonCreate(
@@ -1920,6 +2081,7 @@ static void characterEditorWindowFree()
     }
 
     windowDestroy(gCharacterEditorWindow);
+    gCharacterEditorAppearanceBackground.clear();
 
     for (int index = 0; index < EDITOR_GRAPHIC_COUNT; index++) {
         _editorFrmImages[index].unlock();
@@ -3067,13 +3229,17 @@ static void characterEditorDrawSkills(int a1)
         gCharacterEditorSliderPlusBtn = -1;
     }
 
-    blitBufferToBuffer(_editorBackgroundFrmImage.getData() + 370, 270, 252, 640, gCharacterEditorWindowBuffer + 370, 640);
+    int skillLeft = 370 + characterEditorAppearanceShift(76);
+    const unsigned char* background = gCharacterEditorHasAppearance
+        ? gCharacterEditorAppearanceBackground.data() : _editorBackgroundFrmImage.getData();
+    blitBufferToBuffer(background + skillLeft, 640 - skillLeft, 252, 640,
+        gCharacterEditorWindowBuffer + skillLeft, 640);
 
     fontSetCurrent(103);
 
     // SKILLS
     str = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 117);
-    fontDrawText(gCharacterEditorWindowBuffer + 640 * 5 + 380, str, 640, 640, COLOR_DARK_YELLOW);
+    fontDrawText(gCharacterEditorWindowBuffer + 640 * 5 + 380 + characterEditorAppearanceShift(68), str, 180, 640, COLOR_DARK_YELLOW);
 
     if (!gCharacterEditorIsCreationMode) {
         // SKILL POINTS
@@ -3081,16 +3247,16 @@ static void characterEditorDrawSkills(int a1)
         fontDrawText(gCharacterEditorWindowBuffer + 640 * 233 + 400, str, 640, 640, COLOR_DARK_YELLOW);
 
         value = pcGetStat(PC_STAT_UNSPENT_SKILL_POINTS);
-        characterEditorDrawBigNumber(522, 228, 0, value, 0, gCharacterEditorWindow);
+        characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, 0, value, 0, gCharacterEditorWindow);
     } else {
         // TAG SKILLS
         str = getmsg(&gCharacterEditorMessageList, &gCharacterEditorMessageListItem, 138);
-        fontDrawText(gCharacterEditorWindowBuffer + 640 * 233 + 422, str, 640, 640, COLOR_DARK_YELLOW);
+        fontDrawText(gCharacterEditorWindowBuffer + 640 * 233 + 422 + characterEditorAppearanceShift(36), str, 640, 640, COLOR_DARK_YELLOW);
 
         if (a1 == 2 && !gCharacterEditorIsSkillsFirstDraw) {
-            characterEditorDrawBigNumber(522, 228, ANIMATE, gCharacterEditorTaggedSkillCount, gCharacterEditorOldTaggedSkillCount, gCharacterEditorWindow);
+            characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, ANIMATE, gCharacterEditorTaggedSkillCount, gCharacterEditorOldTaggedSkillCount, gCharacterEditorWindow);
         } else {
-            characterEditorDrawBigNumber(522, 228, 0, gCharacterEditorTaggedSkillCount, 0, gCharacterEditorWindow);
+            characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, 0, gCharacterEditorTaggedSkillCount, 0, gCharacterEditorWindow);
             gCharacterEditorIsSkillsFirstDraw = 0;
         }
     }
@@ -3116,12 +3282,12 @@ static void characterEditorDrawSkills(int a1)
         }
 
         str = skillGetName(skill);
-        fontDrawText(gCharacterEditorWindowBuffer + 640 * y + 380, str, 640, 640, color);
+        fontDrawText(gCharacterEditorWindowBuffer + 640 * y + 380 + characterEditorAppearanceShift(68), str, 190 - characterEditorAppearanceShift(58), 640, color);
 
         value = skillGetValue(gDude, skill);
         snprintf(valueString, sizeof(valueString), "%d%%", value);
 
-        fontDrawText(gCharacterEditorWindowBuffer + 640 * y + 573, valueString, 640, 640, color);
+        fontDrawText(gCharacterEditorWindowBuffer + 640 * y + 573 + characterEditorAppearanceShift(10), valueString, 50, 640, color);
 
         y += fontGetLineHeight() + 1;
     }
@@ -4936,9 +5102,9 @@ static void characterEditorRegisterInfoAreas()
 
     buttonCreate(gCharacterEditorWindow, 191, 41, 122, 110, -1, -1, 528, -1, nullptr, nullptr, nullptr, 0);
     buttonCreate(gCharacterEditorWindow, 191, 175, 122, 135, -1, -1, 529, -1, nullptr, nullptr, nullptr, 0);
-    buttonCreate(gCharacterEditorWindow, 376, 5, 223, 20, -1, -1, 530, -1, nullptr, nullptr, nullptr, 0);
-    buttonCreate(gCharacterEditorWindow, 370, 27, 223, 195, -1, -1, 531, -1, nullptr, nullptr, nullptr, 0);
-    buttonCreate(gCharacterEditorWindow, 396, 228, 171, 25, -1, -1, 532, -1, nullptr, nullptr, nullptr, 0);
+    buttonCreate(gCharacterEditorWindow, 376 + characterEditorAppearanceShift(68), 5, 223 - characterEditorAppearanceShift(68), 20, -1, -1, 530, -1, nullptr, nullptr, nullptr, 0);
+    buttonCreate(gCharacterEditorWindow, 370 + characterEditorAppearanceShift(76), 27, 223 - characterEditorAppearanceShift(66), 195, -1, -1, 531, -1, nullptr, nullptr, nullptr, 0);
+    buttonCreate(gCharacterEditorWindow, 396 + characterEditorAppearanceShift(36), 228, 171, 25, -1, -1, 532, -1, nullptr, nullptr, nullptr, 0);
 }
 
 // copy character to editor
@@ -5413,7 +5579,7 @@ static void characterEditorHandleAdjustSkillButtonPressed(int keyCode)
                 flags = 0;
             }
 
-            characterEditorDrawBigNumber(522, 228, flags, pcGetStat(PC_STAT_UNSPENT_SKILL_POINTS), unspentSp, gCharacterEditorWindow);
+            characterEditorDrawBigNumber(522 + characterEditorAppearanceShift(36), 228, flags, pcGetStat(PC_STAT_UNSPENT_SKILL_POINTS), unspentSp, gCharacterEditorWindow);
 
             windowRefresh(gCharacterEditorWindow);
         }

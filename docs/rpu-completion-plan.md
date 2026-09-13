@@ -1,10 +1,11 @@
 # Plan för komplett RPU-stöd i FOR:CE på Android
 
-Datum: 2026-09-13. Status: implementation pågår; kandidat 1.4.0-alpha.2.
+Datum: 2026-09-13. Status: implementation pågår; kandidat 1.4.0-alpha.3.
 
 ## Avstämning efter nästa implementationssteg
 
 - Alpha.1 levererade spelbiblioteket med separata RPU-, Sonora- och Nevada-profiler samt manifeststyrd innehållsuppdatering.
+- Alpha.3 kompletterar Hero Appearance med roterande modell i karaktärsskaparen, modell-/frisyrval, återställning vid Cancel och GCD-mallar kompatibla med sfall. Se [testprotokollet](rpu-alpha3-tests.md).
 - Alpha.2 implementerar namngivna fake perks/traits med sparat tillstånd, ändringsbara virtuella filer för RPU:s gång- och Goris-skript, Hero Appearance och dess pekkommando, valbara skadeformler/explosioner samt export/återställning av sparningar.
 - De riktade C++-/Java-testerna och Mac-scenarierna finns i [testprotokollet](rpu-alpha2-tests.md). Dessa ersätter inte en genomspelning eller verifiering på Honor-plattan.
 - Referensen för RPU 2.4.34 är nu låst till taggens commit 6cd291f64a48782ed45fe116e5fb453ecbfc5488. De tre källskripten för EPA-belöningen, gånghastigheten och Goris är identiska i den lokala forken och målversionen. En jämförelse av hela innehållet och ett reproducerbart komplett RPU-bygge återstår.
