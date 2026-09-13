@@ -31,6 +31,11 @@ set(FALLOUT_STB_VORBIS_DIR "" CACHE PATH "Directory containing stb_vorbis.c")
 
 if(ANDROID)
     add_library(${EXECUTABLE_NAME} SHARED)
+    # Native libraries must also load on Android devices using 16 KB pages.
+    target_link_options(${EXECUTABLE_NAME} PRIVATE
+        "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
+    )
 else()
     add_executable(${EXECUTABLE_NAME} WIN32 MACOSX_BUNDLE)
 endif()

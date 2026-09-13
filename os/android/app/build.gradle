@@ -157,6 +157,14 @@ android {
         }
     }
 
+    // AGP 7.x cannot guarantee 16 KB ZIP alignment for uncompressed libraries.
+    // Extract compressed native libraries so only ELF alignment is required.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

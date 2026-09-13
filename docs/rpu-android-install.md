@@ -24,6 +24,20 @@ The package does not include RPU or the original Fallout 2 game data. The RPU re
 
 The engine's Android configuration currently requires Android 7.0/API 24 or newer. The package contains arm64-v8a, armeabi-v7a, x86 and x86_64 native libraries. Device compatibility and RPU gameplay still need verification.
 
+## First target device
+
+The first planned device is the user's **HONOR MagicPad 4**. HONOR lists the model with Snapdragon 8 Gen 5 and MagicOS 10 / Android 16 ([manufacturer specification](https://www.honor.com/uk/tablets/honor-magicpad-4/buy/)). The installed OS version and memory page size on the actual device still need to be recorded.
+
+The build includes arm64 native code, 16 KB ELF segment alignment and compressed native libraries using Android's documented compatibility path for older Android Gradle Plugin versions ([Android guidance](https://developer.android.com/guide/practices/page-sizes)). CI checks the resulting APK rather than relying on build settings alone. These checks do not replace running the game on the tablet.
+
+With the tablet connected for testing, record:
+
+```sh
+adb shell getprop ro.build.version.release
+adb shell getprop ro.product.cpu.abilist
+adb shell getconf PAGE_SIZE
+```
+
 ## Controls
 
 - Move one finger to move the mouse cursor.
