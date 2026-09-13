@@ -1,0 +1,51 @@
+name: Wasteland Linux
+on:
+  push:
+    branches: [codex/rpu-android]
+    paths: ['os/linux/**', 'src/**', 'files/**', 'CMakeLists.txt', '.github/workflows/wasteland-linux.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    name: Build and test Linux x86_64
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libsdl2-dev zlib1g-dev python3-gi gir1.2-gtk-4.0 xvfb xauth desktop-file-utils
+      - name: Storage and installer tests
+        run: python3 -m unittest discover -s os/linux/tests -v
+      - name: GTK smoke test
+        run: |
+          python3 os/linux/tests/make_fixture.py /tmp/wasteland-fixture
+          xvfb-run -a python3 os/linux/launcher.py --bundle /tmp/wasteland-fixture/bundle --data-dir /tmp/wasteland-fixture/data --smoke-test
+      - name: Build release engine and matching ce.dat
+        run: |
+          cmake --preset linux-x64-release
+          cmake --build --preset linux-x64-release --target fallout2-ce ce-dat-tool -j 2
+          mkdir -p out/dist/wasteland-linux
+          cp out/build/linux-x64-release/fallout2-ce out/dist/wasteland-linux/
+          out/build/linux-x64-release/ce-dat-tool create files/ce.dat out/dist/wasteland-linux/ce.dat
+          ldd out/dist/wasteland-linux/fallout2-ce | tee out/dist/wasteland-linux/DEPENDENCIES.txt
+          ! grep 'not found' out/dist/wasteland-linux/DEPENDENCIES.txt
+      - name: Source identity
+        env:
+          ENGINE_COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('out/dist/wasteland-linux')
+          files={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in root.iterdir() if p.is_file()}
+          (root/'BUILD_INFO.json').write_text(json.dumps({'engine_commit':os.environ['ENGINE_COMMIT'],'architecture':'x86_64','build_type':'RelWithDebInfo','files':files},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasteland-linux-x86_64
+          path: out/dist/wasteland-linux
+          retention-days: 30
+          if-no-files-found: error
