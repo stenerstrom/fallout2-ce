@@ -53,7 +53,7 @@ final class SaveGameArchive {
             zip.closeEntry();
             byte[] buffer = new byte[65536];
             for (File file : files) {
-                String relative = saves.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/');
+                String relative = relative(saves.getCanonicalFile(), file);
                 checkedRelative(relative);
                 zip.putNextEntry(new ZipEntry("saves/" + relative));
                 try (InputStream input = new FileInputStream(file)) {
@@ -213,7 +213,7 @@ final class SaveGameArchive {
 
     private static String relative(File root, File file) throws IOException {
         within(root, file);
-        String path = root.toPath().relativize(file.getAbsoluteFile().toPath()).toString().replace(File.separatorChar, '/');
+        String path = file.getAbsolutePath().substring(root.getPath().length() + 1).replace(File.separatorChar, '/');
         checkedRelative(path);
         return path;
     }

@@ -54,6 +54,13 @@ and Misc/DamageFormula (0, 1 or 5). Stop the process when changing these INI opt
 Local scratch evidence is under runtime/collection-smoke outside the source tree.
 The scripts are regression probes, not a full quest or campaign test.
 
+## Additional collection regression
+
+With the alpha.2 native engine, Sonora and Nevada each loaded their existing isolated
+alpha.1 save, wrote a new slot, and loaded the new slot successfully. These opening-map
+checks do not verify later progression. Save archive path handling also avoids APIs
+introduced after the application minimum Android API 24.
+
 ## Android acceptance still needed
 
 Install as an update with the existing Complete app identity/signature, then:
