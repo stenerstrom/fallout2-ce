@@ -26,6 +26,10 @@ public class SettingsEditorActivity extends Activity {
     private SettingsRepository repository;
     private String file, section;
     private EditText rawEditor;
+    private String originalText = "";
+    private LauncherUi.Screen screen;
+    private TextView displaySummary;
+    private AlertDialog discardDialog;
     private final List<Field> fields = new ArrayList<>();
 
     private static final class Field {
@@ -41,9 +45,12 @@ public class SettingsEditorActivity extends Activity {
         file = getIntent().getStringExtra("file");
         section = getIntent().getStringExtra("section");
         if (file == null || section == null) { finish(); return; }
-        LinearLayout body = LauncherUi.page(this, getIntent().getStringExtra("title"));
+        screen = new LauncherUi.Screen(this, getIntent().getStringExtra("title"));
+        LinearLayout body = screen.body;
+        LauncherUi.text(this, body, GameProfiles.current(this).title + " · " + file, 12, LauncherUi.MUTED);
         try {
             String text = repository.read(file);
+            originalText = text;
             if (getIntent().getBooleanExtra("raw", false)) {
                 LauncherUi.note(this, body, "Advanced file editing. You can also add settings or enable commented options here. Preserve section names, key names and required mod settings.");
                 rawEditor = new EditText(this);
@@ -60,7 +67,10 @@ public class SettingsEditorActivity extends Activity {
                 JSONObject schema = file.equals("fallout2.cfg") ? SettingsSchema.section(this, section) : null;
                 if (file.equals("fallout2.cfg") && section.equals("screen")) {
                     LauncherUi.note(this, body, "Higher resolution shows more of the map but makes text and buttons smaller. Lower resolution or higher scaling makes them larger.");
-                    LauncherUi.button(this, body, "Choose a resolution", view -> chooseResolution()).setTag("resolution-presets");
+                    addDisplayPresets(body);
+                    LauncherUi.button(this, body, "All resolutions…", view -> chooseResolution()).setTag("resolution-presets");
+                    displaySummary = LauncherUi.text(this, body, "", 16, LauncherUi.MUTED);
+                    displaySummary.setTag("display-summary");
                 }
                 List<String> known = new ArrayList<>();
                 if (schema != null) {
@@ -83,8 +93,32 @@ public class SettingsEditorActivity extends Activity {
                 }
                 if (fields.isEmpty()) LauncherUi.note(this, body, "There are no active settings in this section. Use the full file editor to add values.");
             }
-            LauncherUi.button(this, body, "Save settings", view -> save()).setTag("save-settings");
-            LauncherUi.button(this, body, "Cancel", view -> finish()).setTag("cancel-settings");
+            screen.footer.setVisibility(View.VISIBLE);
+            android.widget.Button cancel = LauncherUi.action(this, "Cancel", false, LauncherUi.GOLD);
+            cancel.setTag("cancel-settings"); cancel.setOnClickListener(v -> onBackPressed());
+            screen.footer.addView(cancel, new LinearLayout.LayoutParams(0, -2, 1));
+            android.widget.Button save = LauncherUi.action(this, "Save settings", true, LauncherUi.GOLD);
+            save.setTag("save-settings"); save.setOnClickListener(v -> save());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+            params.leftMargin = LauncherUi.dp(this, 12);
+            screen.footer.addView(save, params);
+            if (displaySummary != null) {
+                for (Field field : fields) if (field.control instanceof EditText)
+                    ((EditText)field.control).addTextChangedListener(new android.text.TextWatcher() {
+                        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                        public void onTextChanged(CharSequence s, int start, int before, int count) { updateDisplaySummary(); }
+                        public void afterTextChanged(android.text.Editable s) {}
+                    });
+                updateDisplaySummary();
+            }
+            String focus = getIntent().getStringExtra("focus_key");
+            if (focus != null && !focus.isEmpty()) body.post(() -> {
+                View target = body.findViewWithTag("field:" + focus);
+                if (target != null) {
+                    screen.scroll.scrollTo(0, Math.max(0, target.getTop() - LauncherUi.dp(this, 52)));
+                    target.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED);
+                }
+            });
         } catch (Exception error) {
             LauncherUi.error(this, error.getMessage());
         }
@@ -182,7 +216,7 @@ public class SettingsEditorActivity extends Activity {
             field.control = control;
             field.value = () -> control.getText().toString().trim();
             if (metadata.has("min") && metadata.has("max")) {
-                LauncherUi.note(this, body, "Allowed range: " + metadata.optString("min") + "–" + metadata.optString("max"));
+                LauncherUi.note(this, body, "Allowed range: " + (type.equals("integer") ? Integer.toString(metadata.optInt("min")) : metadata.optString("min")) + "–" + (type.equals("integer") ? Integer.toString(metadata.optInt("max")) : metadata.optString("max")));
             }
         }
         field.control.setTag("field:" + key);
@@ -193,6 +227,65 @@ public class SettingsEditorActivity extends Activity {
 
     private static boolean isTrue(String value) {
         try { return Integer.decode(value.trim()) != 0; } catch (NumberFormatException invalid) { return false; }
+    }
+
+    private void addDisplayPresets(LinearLayout body) {
+        Point display = new Point();
+        getWindowManager().getDefaultDisplay().getRealSize(display);
+        String[] labels = {"Large UI", "Balanced", "More map"};
+        int[] heights = {480, 640, 800};
+        LinearLayout row = new LinearLayout(this);
+        body.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        for (int i = 0; i < labels.length; i++) {
+            int[] size = DisplayPresets.size(display.x, display.y, heights[i]);
+            android.widget.Button button = LauncherUi.action(this, labels[i] + "\n" + size[0] + " × " + size[1], false, LauncherUi.GOLD);
+            button.setTag("display-preset:" + i);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+            params.rightMargin = LauncherUi.dp(this, i == 2 ? 0 : 8);
+            row.addView(button, params);
+            button.setOnClickListener(v -> applyResolution(size));
+        }
+    }
+
+    private void applyResolution(int[] size) {
+        for (Field field : fields) {
+            if (!(field.control instanceof EditText)) continue;
+            if (field.key.equals("resolution_x")) ((EditText)field.control).setText(Integer.toString(size[0]));
+            if (field.key.equals("resolution_y")) ((EditText)field.control).setText(Integer.toString(size[1]));
+            if (field.key.equals("scale")) ((EditText)field.control).setText("1");
+        }
+    }
+
+    private void updateDisplaySummary() {
+        IniDocument draft = new IniDocument("");
+        for (Field field : fields) draft.set(section, field.key, field.value.get());
+        try {
+            SettingsValidation.validateScreen(draft);
+            int width = Integer.parseInt(draft.get("screen", "resolution_x", "640"));
+            int height = Integer.parseInt(draft.get("screen", "resolution_y", "480"));
+            int scale = Integer.parseInt(draft.get("screen", "scale", "1"));
+            displaySummary.setText("Effective game area: " + width / scale + " × " + height / scale +
+                    " · " + scale + "× scaling\nSmaller game area = larger text and controls.");
+            displaySummary.setTextColor(LauncherUi.MUTED);
+        } catch (IOException | NumberFormatException error) {
+            displaySummary.setText("Check display settings: " + error.getMessage());
+            displaySummary.setTextColor(0xFFFFB49C);
+        }
+    }
+
+    private boolean hasChanges() {
+        if (rawEditor != null) return !rawEditor.getText().toString().equals(originalText);
+        for (Field field : fields) if (!field.value.get().equals(field.original)) return true;
+        return false;
+    }
+
+    @Override public void onBackPressed() {
+        if (!hasChanges()) { super.onBackPressed(); return; }
+        if (discardDialog != null && discardDialog.isShowing()) return;
+        discardDialog = new AlertDialog.Builder(this).setTitle("Discard changes?")
+                .setMessage("Your changes have not been saved.")
+                .setPositiveButton("Keep editing", null)
+                .setNegativeButton("Discard", (dialog, which) -> finish()).show();
     }
 
     private void chooseResolution() {
@@ -213,12 +306,7 @@ public class SettingsEditorActivity extends Activity {
         for (int i = 0; i < sizes.size(); i++) labels[i] = sizes.get(i)[0] + " × " + sizes.get(i)[1];
         new AlertDialog.Builder(this).setTitle("Game resolution")
                 .setItems(labels, (dialog, index) -> {
-                    for (Field field : fields) {
-                        if (!(field.control instanceof EditText)) continue;
-                        if (field.key.equals("resolution_x")) ((EditText)field.control).setText(Integer.toString(sizes.get(index)[0]));
-                        if (field.key.equals("resolution_y")) ((EditText)field.control).setText(Integer.toString(sizes.get(index)[1]));
-                        if (field.key.equals("scale")) ((EditText)field.control).setText("1");
-                    }
+                    applyResolution(sizes.get(index));
                 }).setNegativeButton("Cancel", null).show();
     }
 

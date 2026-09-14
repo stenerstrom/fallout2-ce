@@ -27,9 +27,11 @@ The engine's Android configuration currently requires Android 7.0/API 24 or newe
 
 ## Settings before starting the game
 
-The launcher exposes all 97 registered engine settings, grouped by purpose. **Display** includes resolution presets, custom width/height, and integer scaling. Resolution changes take effect on the next game start. Higher resolution shows more of the map; lower resolution or higher scaling makes text and controls larger. At least 640 × 480 logical pixels must remain after scaling.
+The library keeps Play, Settings and Saved games visible while the game cards scroll. Each game has separate settings and saves. The selected game and its preparation/update status are shown above the action buttons.
 
-**Mods and all configuration files** lists imported INI/CFG files in the game root, `mods`, and `data/config`. Each file can be edited by section or as full text, including commented and additional options. Not every legacy or optional sfall setting is implemented in FOR:CE. The current RPU 2.4.34 test installation requires `goris_derobing_speed=0` and `critters_walk_faster=0` in `mods/upu.ini` to avoid unimplemented `fs_seek` calls.
+The launcher exposes all 97 registered engine settings, grouped by purpose. Search by label, configuration key or description; a result opens the relevant category at that control. System, debugging and individual configuration files are under **Advanced settings**. Restoration Project options appear for the RPU profile. **Display** includes **Large UI**, **Balanced** and **More map** presets matched to the device's landscape aspect ratio, the full resolution list, custom width/height, and integer scaling. The effective game area is shown as you edit, with validation for invalid combinations. Presets change width, height and scaling only, and are not written until you tap **Save settings**. Save and Cancel remain visible while scrolling; Back and Cancel ask before discarding edits. Resolution changes take effect on the next game start. Higher resolution shows more of the map; lower resolution or higher scaling makes text and controls larger. At least 640 × 480 logical pixels must remain after scaling.
+
+**Advanced settings → Mods and all configuration files** lists imported INI/CFG files in the game root, `mods`, and `data/config`. Each file can be edited by section or as full text, including commented and additional options. Not every legacy or optional sfall setting is implemented in FOR:CE. Faster walking and Goris animation options now have virtual-file support in this branch. Keep **Virtual file support** enabled when using them; the remaining campaign compatibility checks are tracked separately.
 
 Exit through the game's menu before changing settings. The launcher and native engine use separate processes and a shared file lock; controls are disabled while the game is open. Configuration writes preserve unrelated keys and comments and use atomic replacement. A previous version is kept in the app's internal files directory. Existing saves are retained when the APK is installed as an update with the same signing key. Some gameplay and sound preferences can also be restored by loading an old save.
 
@@ -38,7 +40,11 @@ The launcher, settings and command HUD use English. Controls tied to other platf
 ```sh
 python3 os/android/tools/generate_settings_schema.py --check
 bash os/android/tools/test-settings.sh
+cd os/android
+./gradlew --no-daemon -PEXCLUDE_NATIVE_LIBS testDebugUnitTest
 ```
+
+Android UI tests cover library selection, fixed actions, settings search and navigation, draft restoration, discard confirmation, display validation, profile isolation and the command HUD. Native-rendered widget previews are included in CI test artifacts. These checks do not replace testing touch interaction and readability on the physical tablet.
 
 ## First target device
 

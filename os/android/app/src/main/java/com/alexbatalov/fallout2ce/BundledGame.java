@@ -23,8 +23,8 @@ final class BundledGame {
         List<ManagedGameInstaller.Entry> entries=new ArrayList<>();
         Map<String,String> assets=new HashMap<>();
     }
-    private static Bundle load(Context context)throws IOException {
-        String path=manifestPath(context,GameProfiles.current(context));
+    private static Bundle load(Context context,GameProfile profile)throws IOException {
+        String path=manifestPath(context,profile);
         try(InputStream input=context.getAssets().open(path);ByteArrayOutputStream output=new ByteArrayOutputStream()){
             byte[] buffer=new byte[4096];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);
             byte[] bytes=output.toByteArray();JSONObject manifest=new JSONObject(new String(bytes,"UTF-8"));
@@ -49,12 +49,15 @@ final class BundledGame {
         catch(java.security.NoSuchAlgorithmException impossible){throw new AssertionError(impossible);}
     }
     static boolean needsInstall(Context context)throws IOException {
-        if(!available(context))return false;
-        Bundle bundle=load(context);
-        return !ManagedGameInstaller.current(new SettingsRepository(context).gameDirectory(),bundle.id);
+        return needsInstall(context,GameProfiles.current(context));
+    }
+    static boolean needsInstall(Context context,GameProfile profile)throws IOException {
+        if(!available(context,profile))return false;
+        Bundle bundle=load(context,profile);
+        return !ManagedGameInstaller.current(new SettingsRepository(context,profile).gameDirectory(),bundle.id);
     }
     static void install(Context context,BundledGameExtractor.Progress progress)throws IOException {
-        Bundle bundle=load(context);
+        Bundle bundle=load(context,GameProfiles.current(context));
         ManagedGameInstaller.install(new SettingsRepository(context).gameDirectory(),bundle.id,bundle.entries,
                 path->context.getAssets().open(bundle.assets.get(path)),progress);
     }
