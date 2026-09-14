@@ -54,6 +54,22 @@ jobs:
         working-directory: os/android
         run: ./gradlew --no-daemon assembleDebug
 
+      - name: Test Android command panel
+        working-directory: os/android
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Upload command-panel test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-command-panel-tests
+          path: |
+            os/android/app/build/reports/tests/testDebugUnitTest
+            os/android/app/build/reports/hud-preview
+            os/android/app/build/test-results/testDebugUnitTest
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Check HUD keyboard mapping
         run: python3 os/android/tools/check-command-bindings.py
 
@@ -99,8 +115,8 @@ jobs:
                       continue
                   elf = apk.read(entry)
                   assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeSetSpeed' in elf
-                  assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeOpenAppearance' in elf
                   assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeGetSpeed' in elf
+                  assert b'Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeOpenAppearance' not in elf
                   assert elf[:6] == b'\x7fELF\x02\x01', entry.filename
                   phoff = struct.unpack_from('<Q', elf, 32)[0]
                   phsize, phnum = struct.unpack_from('<HH', elf, 54)

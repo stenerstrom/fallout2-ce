@@ -5,8 +5,12 @@ output="$(mktemp -d)"
 trap 'rm -rf "$output"' EXIT
 javac --release 8 -encoding UTF-8 -d "$output" \
   "$android_dir/app/src/main/java/com/alexbatalov/fallout2ce/CommandBindings.java" \
-  "$android_dir/tests/CommandBindingsTests.java"
+  "$android_dir/tests/CommandBindingsTests.java" \
+  "$android_dir/app/src/main/java/com/alexbatalov/fallout2ce/CommandCatalog.java" \
+  "$android_dir/app/src/main/java/com/alexbatalov/fallout2ce/IniDocument.java" \
+  "$android_dir/tests/CommandCatalogTests.java"
 java -cp "$output" com.alexbatalov.fallout2ce.CommandBindingsTests
+java -cp "$output" com.alexbatalov.fallout2ce.CommandCatalogTests
 c++ -std=c++17 -Wall -Wextra -Werror "$android_dir/tests/game_clock_test.cc" -o "$output/game-clock-test"
 "$output/game-clock-test"
 

@@ -1,6 +1,5 @@
 #include "sfall_hero_appearance.h"
 
-#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +16,6 @@
 #include "stat.h"
 #include "tile.h"
 #include "svga.h"
-#include "combat.h"
 #include "font_manager.h"
 #include "game.h"
 #include "game_mouse.h"
@@ -35,7 +33,6 @@ struct AppearanceArchive {
 };
 std::vector<std::unique_ptr<AppearanceArchive>> archives;
 bool initialized = false;
-std::atomic<bool> selectionRequested { false };
 int currentRace = 0;
 int currentStyle = 0;
 int currentGender = -1;
@@ -167,7 +164,6 @@ int heroAppearanceStyle() { return currentStyle; }
 
 void heroAppearanceReset()
 {
-    selectionRequested = false;
     archives.clear();
     currentRace = 0;
     currentStyle = 0;
@@ -292,17 +288,6 @@ void heroAppearanceSelect(int mode)
     showing = false;
 }
 
-void heroAppearanceRequestSelection()
-{
-    selectionRequested = true;
-}
-
-void heroAppearanceProcessRequest()
-{
-    if (!selectionRequested.exchange(false)) return;
-    if (gGameLoaded && !isInCombat() && interfaceBarEnabled()) heroAppearanceSelect(-1);
-}
-
 File* heroAppearanceOpen(const char* path, const char* mode)
 {
     // Underscored critter filenames are reserved for the player's virtual FID
@@ -321,12 +306,3 @@ File* heroAppearanceOpen(const char* path, const char* mode)
 }
 
 } // namespace fallout
-
-#if defined(__ANDROID__)
-#include <jni.h>
-extern "C" JNIEXPORT void JNICALL
-Java_com_alexbatalov_fallout2ce_GameCommandHud_nativeOpenAppearance(JNIEnv*, jclass)
-{
-    fallout::heroAppearanceRequestSelection();
-}
-#endif

@@ -8,8 +8,6 @@ namespace fallout {
 bool heroAppearanceEnabled();
 void heroAppearanceInitialize();
 void heroAppearanceSelect(int mode);
-void heroAppearanceRequestSelection();
-void heroAppearanceProcessRequest();
 void heroAppearanceReset();
 void heroAppearanceLoad();
 void heroAppearanceSyncGender();

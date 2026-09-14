@@ -52,7 +52,7 @@ public class SettingsActivity extends Activity {
                     new String[]{"0", "16", "25", "50", "75", "100"}, "0");
             option(body, "Virtual file support", "Required for faster walking and the Goris animation. Keep this enabled when using those options.",
                     "ddraw.ini", "Misc", "UseFileSystemOverride", new String[]{"Off", "On"}, new String[]{"0", "1"}, "1");
-            option(body, "Hero Appearance", "Enables appearance changes in EPA and the Quick commands menu. Your appearance is saved with your character.",
+            option(body, "Hero Appearance", "Enables MODEL / STYLE during character creation and appearance changes in EPA. Your appearance is saved with your character.",
                     "ddraw.ini", "Misc", "EnableHeroAppearanceMod", new String[]{"Off", "On"}, new String[]{"0", "1"}, "1");
             option(body, "Alternative explosions", "Uses the alternative explosion artwork included with Restoration Project.",
                     "ddraw.ini", "RPU", "AlternativeExplosions", new String[]{"Original", "Alternative"}, new String[]{"0", "1"}, "0");
