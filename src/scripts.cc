@@ -1584,6 +1584,17 @@ int scriptExecProc(int sid, int proc)
 
     script->scriptOverrides = 0;
 
+    // Some maps retain item/critter script records after their objects were
+    // removed in the editor (for example Nevada's opening map). Do not load or
+    // execute these orphaned scripts. Keep their records/local-variable offsets
+    // intact, and allow execution if an object is subsequently attached.
+    // System, timed and spatial scripts can legitimately have no owner.
+    int scriptType = SID_TYPE(sid);
+    if ((scriptType == SCRIPT_TYPE_ITEM || scriptType == SCRIPT_TYPE_CRITTER)
+        && script->owner == nullptr) {
+        return 0;
+    }
+
     bool programLoaded = false;
     if ((script->flags & SCRIPT_FLAG_LOADED) == 0) {
         clock();

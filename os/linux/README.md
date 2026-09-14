@@ -1,14 +1,15 @@
 # Wasteland Collection for Omarchy
 
 An English game library for Fallout 2 with Restoration Project Updated, Sonora
-including Dayglow, and Nevada. This Linux x86_64 build includes the alpha.4 engine
-corrections and the Hero Appearance character-creation panel.
+including Dayglow, and Nevada. This Linux x86_64 build includes the alpha.7 engine
+corrections and the Hero Appearance character-creation panel. Object scripts left without
+an owner in Nevada maps and older saves are skipped before initialization.
 
 ## Install
 
 Copy the private .run installer to your Omarchy computer and run:
 
-    bash Wasteland-Collection-1.4.0-alpha.4-linux.1-Omarchy-x86_64.run
+    bash Wasteland-Collection-1.4.0-alpha.7-linux.2-Omarchy-x86_64.run
 
 The installer checks the embedded files and adds Wasteland Collection to the app
 menu. Press Super + Space and search for Wasteland Collection. Missing Arch
